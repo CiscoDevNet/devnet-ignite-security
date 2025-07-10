@@ -1,0 +1,112 @@
+# Ansible Playbook
+
+- hosts: fmc
+  connection: httpapi
+  gather_facts: False
+  tasks:
+    - name: Get Domain
+      cisco.fmcansible.fmc_configuration:
+        operation: getAllDomain
+        register_as: domain
+
+    - name: Create Access Policy
+      cisco.fmcansible.fmc_configuration:
+        operation: upsertAccessPolicy
+        path_params:
+          domainUUID: '{{ domain[0].uuid }}'
+        data:
+          name: '{{ name }}_policy'
+          type: AccessPolicy
+          defaultAction:
+            action: BLOCK
+        register_as: accesspolicy
+
+# Objects
+    - name: Internal Network
+      cisco.fmcansible.fmc_configuration:
+        operation: upsertNetworkObject
+        data:
+          name: '{{ name }}_inside_subnet'
+          value: 172.16.3.0/24
+          type: Network
+        path_params:
+          domainUUID: '{{ domain[0].uuid }}'
+        register_as: int_net
+
+    - name: External Network
+      cisco.fmcansible.fmc_configuration:
+        operation: upsertNetworkObject
+        data:
+          name: '{{ name }}_outside_subnet'
+          value: 172.16.2.0/24
+          type: Network
+        path_params:
+          domainUUID: '{{ domain[0].uuid }}'
+        register_as: ext_net
+
+    - name: Get Port Object HTTP
+      cisco.fmcansible.fmc_configuration:
+        operation: getAllProtocolPortObject
+        path_params:
+          domainUUID: '{{ domain[0].uuid }}'
+        filters:
+          name: HTTP
+        register_as: http
+
+    - name: Get Port Object HTTPS
+      cisco.fmcansible.fmc_configuration:
+        operation: getAllProtocolPortObject
+        path_params:
+          domainUUID: '{{ domain[0].uuid }}'
+        filters:
+          name: HTTPS
+        register_as: https
+
+# Rule
+    - name: AccessRule1
+      cisco.fmcansible.fmc_configuration:
+        operation: upsertAccessRule
+        data:
+          name: '{{ name }}_rule'
+          type: accessrule
+          action: ALLOW
+          section: mandatory
+          enabled: true
+          sendEventsToFMC: true
+          logBegin: true
+          logEnd: true
+#          sourceZones:
+#            objects:
+#              - name: '{{ int_zone.name }}'
+#                id: '{{ int_zone.id }}'
+#                type: '{{ int_zone.type }}'
+#          destinationZones:
+#            objects:
+#              - name: '{{ ext_zone.name }}'
+#                id: '{{ ext_zone.id }}'
+#                type: '{{ ext_zone.type }}'
+          sourceNetworks:
+            objects:
+              - id: '{{ int_net.id }}'
+                name: '{{ int_net.name }}'
+                type: '{{ int_net.type }}'
+          destinationNetworks:
+            objects:
+              - id: '{{ ext_net.id }}'
+                name: '{{ ext_net.name }}'
+                type: '{{ ext_net.type }}'
+          destinationPorts:
+            objects:
+              - id: '{{ http[0].id }}'
+                name: '{{ http[0].name }}'
+                type: '{{ http[0].type }}'
+              - id: '{{ https[0].id }}'
+                name: '{{ https[0].name }}'
+                type: '{{ https[0].type }}'
+          newComments:
+            - 'Internal to External Traffic'
+        path_params:
+          section: mandatory
+          containerUUID: '{{ accesspolicy.id }}'
+          domainUUID: '{{ domain[0].uuid }}'
+        register_as: accessrule1

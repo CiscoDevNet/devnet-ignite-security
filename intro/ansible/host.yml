@@ -1,0 +1,11 @@
+all:
+  hosts:
+    fmc:
+      ansible_host:
+      ansible_network_os: cisco.fmcansible.fmc
+      ansible_user: admin
+      ansible_password:
+      ansible_httpapi_port: 443
+      ansible_httpapi_use_ssl: True
+      ansible_httpapi_validate_certs: False
+      name: yourname

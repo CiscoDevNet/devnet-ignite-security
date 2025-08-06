@@ -75,16 +75,6 @@
           sendEventsToFMC: true
           logBegin: true
           logEnd: true
-#          sourceZones:
-#            objects:
-#              - name: '{{ int_zone.name }}'
-#                id: '{{ int_zone.id }}'
-#                type: '{{ int_zone.type }}'
-#          destinationZones:
-#            objects:
-#              - name: '{{ ext_zone.name }}'
-#                id: '{{ ext_zone.id }}'
-#                type: '{{ ext_zone.type }}'
           sourceNetworks:
             objects:
               - id: '{{ int_net.id }}'

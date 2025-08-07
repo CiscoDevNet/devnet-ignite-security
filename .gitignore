@@ -4,3 +4,8 @@
 .idea/modules.xml
 .idea/vcs.xml
 .idea/workspace.xml
+intro/terraform/.terraform.lock.hcl
+intro/terraform/.terraform/providers/registry.terraform.io/ciscodevnet/fmc/2.0.0-rc2/darwin_arm64/CHANGELOG.md
+intro/terraform/.terraform/providers/registry.terraform.io/ciscodevnet/fmc/2.0.0-rc2/darwin_arm64/LICENSE
+intro/terraform/.terraform/providers/registry.terraform.io/ciscodevnet/fmc/2.0.0-rc2/darwin_arm64/README.md
+intro/terraform/.terraform/providers/registry.terraform.io/ciscodevnet/fmc/2.0.0-rc2/darwin_arm64/terraform-provider-fmc_v2.0.0-rc2

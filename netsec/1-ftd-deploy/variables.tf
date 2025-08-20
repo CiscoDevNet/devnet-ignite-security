@@ -13,7 +13,7 @@ resource "random_string" "env_str" {
 # Env name is tagged on all resources
 variable "env_name" {
   type          = string
-  default       = "DevNet-Ignite-${random_string.env_str}"
+  default       = "DevNet-Ignite-{random_string.env_str}"
 }
 
 # AWS

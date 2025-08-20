@@ -2,18 +2,10 @@
 # Variables
 ##############
 
-# Environment
-# since we don't want to overwrite VPCs in place, create an 8-char envrionment string
-resource "random_string" "env_str" {
-  length           = 8
-  min_lower        = 1
-  min_numeric      = 1
-  min_upper        = 1
-}
-# Env name is tagged on all resources
+# Environment name is tagged on all resources
 variable "env_name" {
   type          = string
-  default       = "DevNet-Ignite-{random_string.env_str}"
+  default       = "DevNet-Ignite"
 }
 
 # AWS

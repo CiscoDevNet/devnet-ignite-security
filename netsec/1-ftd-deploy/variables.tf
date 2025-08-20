@@ -5,7 +5,7 @@
 # Environment name is tagged on all resources
 variable "env_name" {
   type          = string
-  default       = "DevNet-Ignite"
+  default       = "NetSec-Ignite"
 }
 
 # AWS

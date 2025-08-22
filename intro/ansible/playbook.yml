@@ -8,16 +8,3 @@
       cisco.fmcansible.fmc_configuration:
         operation: getAllDomain
         register_as: domain
-
-    - name: Create Access Policy
-      cisco.fmcansible.fmc_configuration:
-        operation: upsertAccessPolicy
-        path_params:
-          domainUUID: '{{ domain[0].uuid }}'
-        data:
-          name: '{{ name }}_policy'
-          type: AccessPolicy
-          defaultAction:
-            action: BLOCK
-        register_as: accesspolicy
-

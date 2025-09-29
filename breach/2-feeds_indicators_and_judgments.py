@@ -88,8 +88,7 @@ def create_indicator(host,access_token,indicator_name,indicator_type,description
 #  def_create_feed***
 def create_feed(host,access_token,indicator_id,feed_name):
     '''
-    MODIFIED : 2025-07-20
-
+    MODIFIED : 2025-09-02
     description : Create a feed into XDR
     '''
     route="/create_feed"
@@ -108,7 +107,7 @@ def create_feed(host,access_token,indicator_id,feed_name):
     feed_object["title"] = feed_name
     feed_object["tlp"] = "amber"
     feed_object["lifetime"] = {
-      "start_time": dateTime.strftime("%Y-%m-%dT00:00.000Z")
+        "start_time": dateTime.strftime("%Y-%m-%dT00:00.000Z")
     }
     feed_object["timestamp"] = dateTime.strftime("%Y-%m-%dT00:00.000Z")
     feed_object["feed_type"] = "indicator"
@@ -132,9 +131,10 @@ def create_feed(host,access_token,indicator_id,feed_name):
     print (yellow(response,bold=True))  
     print(green(response.json(),bold=True))  
     feed_id=response.json()['id']
-    print('\n feed id : ',green(response.json(),bold=True))     
+    feed_url=response.json()['feed_view_url']
+    print('\n result : ',green(response.json(),bold=True))     
     env.level=env.level[:-1]
-    return(feed_id,response.status_code)
+    return(feed_id,feed_url,response.status_code)
     
 
 if __name__=="__main__":
@@ -153,8 +153,7 @@ if __name__=="__main__":
     print(cyan('      -> DONE',bold=True))     
     print()
     a = input('let\'s go for it ( type any key ) ? :') 
-    print(cyan('-> Let\s get API credentials',bold=True))
-    print()    
+    print(cyan('-> Let\s get API credentials\n',bold=True)) 
     with open('config.txt','r') as file:
         text_content=file.read()
     client_id,client_password,host_for_token,host,conure = parse_config(text_content) # parse config.txt
@@ -165,7 +164,7 @@ if __name__=="__main__":
     fa.close()
     host="https://private.intel.eu.amp.cisco.com"    
     '''
-    print(cyan('-> First let\'s create the Indicator',bold=True)) 
+    print(yellow('-> First let\'s create the Indicator',bold=True)) 
     indicator_name=input(yellow('\nEnter Indicator Name ( default : DevNet_Indicator_for_risky_IP_Addresses ): ',bold=True))
     indicator_name=indicator_name.strip()
     if indicator_name=='':
@@ -175,39 +174,37 @@ if __name__=="__main__":
     description='Example of Indicator for risky IP Addresses'
     source='DevNet Ignite Lab'
     create_in_xdr='YES'
-
     indicator_id,status_code=create_indicator(host,access_token,indicator_name,indicator_type,description,source,create_in_xdr)
     print('\nstatus code : ',yellow(status_code,bold=True))           
     if status_code==201:
-        print(green("\nHTTP REST CALL SUCCEEDED",bold=True))       
+        print(green("\nHTTP REST CALL SUCCEEDED",bold=True))
     else:
         print(red("\nHTTP REST CALL FAILED line #45",bold=True))
-        print()
         sys.exit()
     print('\n indicator_id : ',green(indicator_id,bold=True))
     with open('indicator_id.txt','w') as file:
-        file.write(indicator_id)    
-    a = input(white('\nOK NEXT...',bold=True)) 
-    print(cyan('\n--> let\'s create the Feed',bold=True))
-    feed_name=input(yellow('\nEnter Indicator Name ( default : DevNet_Feed_for_risky_IP_Addresses ): ',bold=True))
+        file.write(indicator_id)
+    a = input(white('\nOK Press Enter for Next Step...',bold=True)) 
+    print(cyan('\n--> Now let\'s create the Feed',bold=True))
+    feed_name=input(yellow('\nEnter a Feed Name ( default : DevNet_Feed_for_risky_IP_Addresses ): ',bold=True))
     feed_name=feed_name.strip()
     if feed_name=='':
         feed_name='DevNet_Feed_for_risky_IP_Addresses'
     print(magenta(f'\n--> CALL  A SUB FUNCTION : create the feed : {feed_name}',bold=True))
-    feed_id,status_code=create_feed(host,access_token,indicator_id,feed_name)
+    feed_id,feed_url,status_code=create_feed(host,access_token,indicator_id,feed_name)
     print('\nstatus code : ',yellow(status_code,bold=True))           
     if status_code==201:
-        print(green("\nHTTP REST CALL SUCCEEDED",bold=True))       
+        print(green("\nHTTP REST CALL SUCCEEDED",bold=True))
+        print('feed URL :\n',green("\n"+feed_url,bold=True))
     else:
         print(red("HTTP REST CALL FAILED line #63",bold=True))
-        print()
-        sys.exit()            
-    print()
-    print(' feed_id : ',green(feed_id,bold=True))
-    print()
+        sys.exit()
+    print('\nfeed_id : ',green(feed_id,bold=True))
     with open('feed_id.txt','w') as file:
-          file.write(feed_id)    
-    a = input('\nOK NEXT STEP WILL BE TO ADD IP ADDRESSES INTO FEEDS') 
-    print(cyan('---> let\'s create the Judgment JSON from ip_addresses.txt list\n    For thid run the 3-add_ip_addresses_into_feeds.py script ',bold=True))
+        file.write(feed_id)
+    with open('feed_url.txt','w') as file:
+        file.write(feed_url)
+    print(yellow('\nCopy and save somewhere the Feed URL above. You can open it into your browser',bold=True))        
+    print(cyan('\nOK NEXT STEP WILL BE TO ADD IP ADDRESSES INTO FEEDS. Run the 3-add_ip_addresses_into_feeds.py script for this',bold=True))
     
- 
+

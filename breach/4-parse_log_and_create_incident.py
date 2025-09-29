@@ -366,60 +366,44 @@ def create_incident_json(incident_title,description,source,short_description,tlp
     
 if __name__=="__main__":
     '''
-        modified : 20250730
+        version : 2025-09-10
     '''
-    print()  
-    print(yellow('STARTING HERE => ',bold=True))
-    print()       
-    print(yellow('NEXT : Load connection parameters to XDR Tenant => ',bold=True))
-    print()    
+    print(yellow('\nSTARTING HERE => ',bold=True))       
+    print(yellow('\nNEXT : Load connection parameters to XDR Tenant => ',bold=True))  
     #
     # Load API connection details to XDR tenant for futur utilization :
     #    
     with open('config.txt','r') as file:
-        text_content=file.read()        
+        text_content=file.read()
     client_id,client_password,host_for_token,host,conure = parse_config(text_content)    
     #
     # Load API connection details to XDR tenant for futur utilization :
     #
-    #
     # Ask for an API token to XDR :
     #  
-    print()
-    print(yellow('NEXT : Asking for an API token => ',bold=True))
-    print()     
-    a = input('type Enter : ')        
+    print(yellow('\nNEXT : Asking for an API token => ',bold=True))    
+    a = input('Press Enter : ')        
     access_token=get_ctr_token(host_for_token,client_id,client_password)
-    print()
     #
     # Ask for an API token to XDR = OK DONE
     #     
-    print(yellow('NEXT : Read syslog message => ',bold=True))
-    print()    
-    a = input('type Enter : ')    
+    print(yellow('\nNEXT : Read syslog message => ',bold=True))
+    a = input('Press Enter : ')    
     #
     # read syslog message :
     #
     with open('./log.log') as file:
         syslog_message=file.read()
-    print()
-    print('syslog_message :',cyan(syslog_message,bold=True))
-    print()  
-    print(yellow('NEXT : Parse the syslog message above => ',bold=True))
-    print()     
-    a = input('type Enter : ')       
-    print()    
+    print('\nsyslog_message :',cyan(syslog_message,bold=True))
+    print(yellow('\nNEXT : Parse the syslog message above => ',bold=True))     
+    a = input('Press Enter : ')         
     #
     # parse the syslog message and get back objects needed for sighting definitions :
     #
     log_objects=parse_syslog(syslog_message) # call function   
-    print()  
-    print(green("- Parse the syslog message above = OK Done ",bold=True))  
-    print()    
-    print(yellow('NEXT : Create a sighting list with every parsed detections from syslog =>',bold=True))
-    print()     
-    a = input('type Enter : ')          
-    print()    
+    print(green("\n- Parse the syslog message above = OK Done ",bold=True))    
+    print(yellow('\nNEXT : Create a sighting list with every parsed detections from syslog =>',bold=True))    
+    a = input('Press Enter : ')             
     #
     # create a single sighting json payload to be added into a list that contains all sightings:
     #
@@ -429,22 +413,17 @@ if __name__=="__main__":
     #
     sighting_list=[]
     sighting_list.append(sighting_json)
-    print()  
-    print(green("Create a sighting list with every parsed detections from syslog = OK Done ",bold=True))  
-    print()  
-    #print(yellow('NEXT : Create Incident JSON Bundle and Post it to XDR => >',bold=True))
-    #print()      
-    a = input('type Enter : ')       
-    print()     
+    print(green("\nCreate a sighting list with every parsed detections from syslog = OK Done ",bold=True))  
+    #print(yellow('\nNEXT : Create Incident JSON Bundle and Post it to XDR => >',bold=True))    
+    a = input('Press Enter : ')           
     #
     # Create the Incident :
     #
     incident_title="Secure Firewall IPS Alerts for Src : "+log_objects['SrcIP']+" to Dst : "+log_objects['DstIP'] # incident title
-    result=create_an_xdr_incident(sighting_list,log_objects['SrcIP'],incident_title) # call function
-    print()  
-    print()      
+    result=create_an_xdr_incident(sighting_list,log_objects['SrcIP'],incident_title) # call function   
     print(result)
     if result:
-          print(green("- OK ALL DONE. Incident POSTED to XDR. Check this into the XDR Tenant : ",bold=True))  
+            print(green("\n- OK ALL DONE. Incident POSTED to XDR. Check this into the XDR Tenant : ",bold=True))
     else:
-        print(red("- ERROR , SOMETHING WRONG HAPPENED : ",bold=True))
+        print(red("\n- ERROR , SOMETHING WRONG HAPPENED : ",bold=True))
+

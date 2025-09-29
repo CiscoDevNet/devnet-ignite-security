@@ -205,7 +205,7 @@ def date_plus_x_days(nb):
 
 if __name__=="__main__":
     '''
-        modidfied : 20250729
+        modidfied : 2025-09-10
     '''
     print(cyan('-> Let\'s get API credentials',bold=True))
     print()    
@@ -223,7 +223,7 @@ if __name__=="__main__":
     observable_list,status_code=inspect_the_text(host_for_token,access_token,text_content) # parse raw text content and extract observables and their types
     print('\nobservable list :\n',yellow(observable_list,bold=True))  
     with open('./indicator_id.txt') as file:
-        indicator_id=file.read()    
+        indicator_id=file.read()
     print(magenta('\n--> CALL FUNCTION : create_judgments_json_payload',bold=True))        
     disposition_name="Malicious"
     severity="High"
@@ -241,3 +241,4 @@ if __name__=="__main__":
     create_judgments_and_attach_to_feed(data,indicator_id,host) # call function that POST judgments in destination XDR tenant
     print(green('\nOK DONE. You can check Feed content in XDR',bold=True))
  
+

@@ -15,7 +15,6 @@ import env as env
 def parse_config(text_content):
     '''
     MODIFIED : 2025-07-30
-
     description : read the config.txt file where are stored the XDR client details and credentials
     
     how to call it : client_id,client_password,host_for_token,host,conure = parse_config(text_content) 
@@ -26,7 +25,7 @@ def parse_config(text_content):
     text_lines=text_content.split('\n')
     conf_result=['','','','','']
     for line in text_lines:
-        print(green(line+'\n',bold=True))
+        #print(green(line+'\n',bold=True))
         if 'ctr_client_id' in line:
             words=line.split('=')
             if len(words)==2:
@@ -44,15 +43,15 @@ def parse_config(text_content):
                 conf_result[1]=conf_result[1].replace("'","")
                 conf_result[1]=conf_result[1].strip()
             else:
-                conf_result[1]=""  
+                conf_result[1]=""
         elif '.eu.amp.cisco.com' in line:
             conf_result[2]="https://visibility.eu.amp.cisco.com"
             conf_result[3]="https://private.intel.eu.amp.cisco.com"
         elif '.intel.amp.cisco.com' in line:
             conf_result[2]="https://visibility.amp.cisco.com"
-            conf_result[3]="https://private.intel.amp.cisco.com"            
+            conf_result[3]="https://private.intel.amp.cisco.com"
         elif '.apjc.amp.cisco.com' in line:
-            conf_result[2]="https://visibility.apjc.amp.cisco.com"  
+            conf_result[2]="https://visibility.apjc.amp.cisco.com"
             conf_result[3]="https://private.intel.apjc.amp.cisco.com"
         elif 'conure' in line:
             words=line.split('=')
@@ -62,15 +61,15 @@ def parse_config(text_content):
                 conf_result[4]=conf_result[4].replace("'","")
                 conf_result[4]=conf_result[4].strip()
             else:
-                conf_result[1]=""            
-    print(yellow(conf_result))
+                conf_result[1]=""
+    #print(yellow(conf_result))
     return conf_result
   
+
 #  def_get_ctr_token***
 def get_ctr_token(host_for_token,ctr_client_id,ctr_client_password):
     '''
-    MODIFIED : 2025-07-20
-
+    MODIFIED : 2025-09-10
     description : asking for an API Token to XDR
     '''
     route="/get_ctr_token"
@@ -86,21 +85,17 @@ def get_ctr_token(host_for_token,ctr_client_id,ctr_client_password):
     print('\n url :',url)   
     headers = {'Content-Type':'application/x-www-form-urlencoded', 'Accept':'application/json'}
     payload = {'grant_type':'client_credentials'}
-    print('\nctr_client_id : ',green(ctr_client_id,bold=True))
-    print('\nctr_client_password : ',green(ctr_client_password,bold=True))
+    #print('\nctr_client_id : ',green(ctr_client_id,bold=True))
+    #print('\nctr_client_password : ',green(ctr_client_password,bold=True))
     response = requests.post(url, headers=headers, auth=(ctr_client_id, ctr_client_password), data=payload) # POST CALL to XDR
     print('response =\n',cyan(response.json(),bold=True))
     if 'error' in response.json().keys():
         if response.json()['error']=='invalid_client':
-            print()
-            print(red('Error Invalid client-ID !',bold=True))
-            print()
+            print(red('\nError Invalid client-ID !',bold=True))
             sys.exit()
         elif response.json()['error']=='wrong_client_creds':
-            print()
-            print(red('Error Invalid client-Password !',bold=True))
-            print()
-            sys.exit() 
+            print(red('\nError Invalid client-Password !',bold=True))
+            sys.exit()
     # here under let s extract the token
     reponse_list=response.text.split('","')
     token=reponse_list[0].split('":"')
@@ -111,6 +106,7 @@ def get_ctr_token(host_for_token,ctr_client_id,ctr_client_password):
     fa.close()
     return (token[1])  
   
+
 #  def_ask_for_a_token***
 def ask_for_a_token():
     '''

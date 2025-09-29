@@ -34,7 +34,6 @@ def get(host,access_token,url,offset,limit):
 def get_incidents(host,access_token,client_id,client_password,host_for_token):
     '''
     MODIFIED : 2025-07-25T12:06:36.000Z
-
     description : Get incidents in XDR tenant with legacy APIs ( not CONURE )
     
     how to call it :
@@ -50,21 +49,26 @@ def get_incidents(host,access_token,client_id,client_password,host_for_token):
         index=0
         print(magenta('\nSend API to XDR tenant and get incident list :',bold=True))
         response = get(host,access_token,url,offset,limit)
-        print(response)      
+        print(response)
         if response.status_code==401:
             print(magenta('\n2nd try with new token - Send API to XDR tenant and get incident list :',bold=True))
             access_token=get_ctr_token(host_for_token,client_id,client_password)
             response = get(host,access_token,url,offset,limit)
         payload = json.dumps(response.json(),indent=4,sort_keys=True, separators=(',', ': '))
-        #print(response.json())    
+        #print(response.json())
         print(yellow('\nIncidents into the XDR Tenant :\n',bold=True))
         items=response.json()
-        for item in items: 
-            #print(yellow(item,bold=True))
-            if item['id'] not in item_list:
-                item_list.append(item['id'])
-            print(str(index),' : ',item['title'])    
-            index+=1            
+        if items:
+            for item in items:
+                #print(yellow(item,bold=True))
+                if item['id'] not in item_list:
+                    item_list.append(item['id'])
+                print(str(index),' : ',item['title'])
+                index+=1
+        else:
+            print(red('\nThere is no Incident yet in this tenant !',bold=True))
+            print(white('No Problem you must try again when you have Incidents',bold=True))
+            sys.exit()
         if index>=limit-1:
             go=1
             offset+=index-1
@@ -72,11 +76,10 @@ def get_incidents(host,access_token,client_id,client_password,host_for_token):
             go=0
     i=0
     print()
-    a=input(yellow('\nWhich Incident do you select ? ( enter incident index ) : ',bold=True))
+    a=input(yellow('\nWhich Incident do you want to select ? ( enter incident index ) : ',bold=True))
     if a:
         index=int(a)
     else:
-        print()
         print(red('\nError ! : You must Select an Incident !',bold=True))
         sys.exit()
     return (item_list[index])
@@ -84,8 +87,7 @@ def get_incidents(host,access_token,client_id,client_password,host_for_token):
 #  def_main***
 def main():
     '''
-    MODIFIED : 2025-07-30
-
+    MODIFIED : 2025-09-10
     description : main function 
     
     how to call it : main()
@@ -101,15 +103,14 @@ def main():
     access_token = fa.readline()
     fa.close()
     print(yellow('\n- Get Incidents first',bold=True))
-    print()
     incident_ID=get_incidents(host,access_token,client_id,client_password,host_for_token)
     incident_ID=incident_ID.replace(host+':443/ctia/incident/','')
     print("\nSelected Incident ID is : \n",cyan(incident_ID,bold=True))
-    print()
     with open('./incident_id.txt','w') as file:
         file.write(incident_ID)
     return 1
   
+
 if __name__=="__main__":
     print("start here")
     main()

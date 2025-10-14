@@ -1,0 +1,25 @@
+meta {
+  name: Get Users (Unpublished)
+  type: http
+  seq: 27
+}
+
+get {
+  url: https://management.api.umbrella.com/identity/v2/organizations/{{org}}/search
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~label: 
+  ~type: directory_user
+  ~subType: 
+  ~ppId: 
+  ~pageLimit: 
+  ~page: 
+  ~order: 
+}
+
+settings {
+  encodeUrl: true
+}

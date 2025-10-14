@@ -1,0 +1,69 @@
+meta {
+  name: Create Bypass Code
+  type: http
+  seq: 10
+}
+
+post {
+  url: https://{{duo_api_hostname}}/admin/v1/users/{{user_id}}/bypass_codes
+  body: formUrlEncoded
+  auth: none
+}
+
+body:json {
+  {
+    "name": "DevNet Ignite RDP",
+    "type": "rdp"
+  }
+}
+
+body:form-urlencoded {
+  ~count: 
+  ~valid_secs: 
+  ~codes: 
+  ~preserve_existing: 
+  ~reuse_count: 
+}
+
+vars:pre-request {
+  user_id: DUE8SA0PAM97R9BBLBXY
+}
+
+script:post-response {
+  var template = `
+  <style type="text/css">
+      .tftable {font-size:14px;color:#333333;width:100%;border-width: 1px;border-color: #87ceeb;border-collapse: collapse;}
+      .tftable th {font-size:18px;background-color:#87ceeb;border-width: 1px;padding: 8px;border-style: solid;border-color: #87ceeb;text-align:left;}
+      .tftable tr {background-color:#ffffff;}
+      .tftable td {font-size:14px;border-width: 1px;padding: 8px;border-style: solid;border-color: #87ceeb;}
+      .tftable tr:hover {background-color:#e0ffff;}
+  </style>
+  
+  <table class="tftable" border="1">
+      <tr>
+          <th>User ID</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Email</th>
+          <th>Status</th>
+      </tr>
+      
+      {{#each response}}
+          <tr>
+              <td>{{user_id}}</td>
+              <td>{{firstname}}</td>
+              <td>{{lastname}}</td>
+              <td>{{email}}</td>
+              <td>{{status}}</td>
+          </tr>
+      {{/each}}
+  </table>
+  `;
+  
+  function constructVisualizerPayload() {
+      var res = res.getBody();
+      return {response: res.response};
+  }
+  
+  // pm.visualizer.set(template, constructVisualizerPayload());
+}

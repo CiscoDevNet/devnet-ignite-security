@@ -1,0 +1,19 @@
+meta {
+  name: Get Resource Connector Group
+  type: http
+  seq: 6
+}
+
+get {
+  url: https://api.sse.cisco.com/deployments/v2/connectorGroups/{{id}}?includeProvisioningKey=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeProvisioningKey: true
+}
+
+vars:pre-request {
+  id: 168370
+}

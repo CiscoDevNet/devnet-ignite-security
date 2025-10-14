@@ -1,0 +1,15 @@
+meta {
+  name: Delete Destination from Destination List
+  type: http
+  seq: 19
+}
+
+delete {
+  url: https://api.sse.cisco.com/policies/v2/destinationlists/{{destinationListId}}/destinations/remove
+  body: json
+  auth: inherit
+}
+
+vars:pre-request {
+  destinationListId: 
+}

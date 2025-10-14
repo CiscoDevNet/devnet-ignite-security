@@ -1,0 +1,15 @@
+meta {
+  name: Get Rule
+  type: http
+  seq: 24
+}
+
+get {
+  url: https://api.sse.cisco.com/policies/v2/rules/{{ruleId}}
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  ruleId: 
+}

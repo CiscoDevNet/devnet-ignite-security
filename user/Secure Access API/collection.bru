@@ -1,0 +1,14 @@
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+vars:pre-request {
+  api_key: 
+  api_key_secret: 
+  org: 
+  ~access_token: 
+}

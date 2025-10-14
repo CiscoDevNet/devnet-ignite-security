@@ -1,0 +1,16 @@
+meta {
+  name: List Application Categories
+  type: http
+  seq: 26
+}
+
+get {
+  url: https://api.sse.cisco.com/policies/v2/applicationCategories?page=1&limit=100
+  body: none
+  auth: inherit
+}
+
+params:query {
+  page: 1
+  limit: 100
+}

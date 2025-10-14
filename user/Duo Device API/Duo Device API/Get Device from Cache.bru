@@ -1,0 +1,17 @@
+meta {
+  name: Get Device from Cache
+  type: http
+  seq: 5
+}
+
+get {
+  url: https://{{duo_api_hostname}}/device/v1/management_systems/{{duo_mkey}}/device_cache/{{cache_key}}/devices
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  ~devie_ids: 
+  ~limit: 
+  ~offset: 
+}

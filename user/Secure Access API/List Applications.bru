@@ -1,0 +1,33 @@
+meta {
+  name: List Applications
+  type: http
+  seq: 29
+}
+
+get {
+  url: https://api.sse.cisco.com/reports/v2/appDiscovery/applications
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~sources: 
+  ~identity: 
+  ~labels: 
+  ~controllable: 
+  ~weightedRisk: 
+  ~categories: 
+  ~subcategory: 
+  ~subcategory_content_types: 
+  ~appTypes: 
+  ~date: 
+  ~limit: 
+  ~offset: 
+  ~sort: 
+  ~order: 
+  ~label_timestamp: 
+}
+
+settings {
+  encodeUrl: true
+}

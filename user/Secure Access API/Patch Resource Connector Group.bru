@@ -1,0 +1,15 @@
+meta {
+  name: Patch Resource Connector Group
+  type: http
+  seq: 8
+}
+
+patch {
+  url: https://api.sse.cisco.com/deployments/v2/connectorGroups/{{id}}
+  body: json
+  auth: inherit
+}
+
+vars:pre-request {
+  id: 184336
+}

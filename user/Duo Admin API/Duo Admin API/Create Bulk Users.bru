@@ -1,0 +1,39 @@
+meta {
+  name: Create Bulk Users
+  type: http
+  seq: 4
+}
+
+post {
+  url: https://{{duo_api_hostname}}/admin/v1/users/bulk_create
+  body: formUrlEncoded
+  auth: none
+}
+
+body:json {
+  {
+    "users": [
+      {
+        "username": "jdoe",
+        "realname": "John Doe",
+        "email": "jdoe@example.com",
+        "phones": [
+          {
+            "phone": "+15551234567",
+            "type": "mobile"
+          }
+        ],
+        "status": "active"
+      },
+      {
+        "username": "asmith",
+        "realname": "Alice Smith"
+      }
+      // up to 100 users
+    ]
+  }
+}
+
+body:form-urlencoded {
+  users: 
+}

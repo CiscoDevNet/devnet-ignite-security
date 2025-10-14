@@ -1,0 +1,11 @@
+meta {
+  name: Activate Device Cache
+  type: http
+  seq: 3
+}
+
+post {
+  url: https://{{duo_api_hostname}}/device/v1/management_systems/{{duo_mkey}}/device_cache/{{cache_key}}/activate
+  body: none
+  auth: none
+}

@@ -1,0 +1,20 @@
+meta {
+  name: List Network Tunnel Groups
+  type: http
+  seq: 12
+}
+
+get {
+  url: https://api.sse.cisco.com/deployments/v2/networktunnelgroups?includeStatuses=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeStatuses: true
+  ~filters: 
+  ~offset: 
+  ~limit: 
+  ~sortBy: 
+  ~sortOrder: 
+}

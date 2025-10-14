@@ -1,0 +1,15 @@
+meta {
+  name: Get Network Tunnel Group
+  type: http
+  seq: 13
+}
+
+get {
+  url: https://api.sse.cisco.com/deployments/v2/networktunnelgroups/{{id}}
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  id: 
+}

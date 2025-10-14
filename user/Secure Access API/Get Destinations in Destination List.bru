@@ -1,0 +1,20 @@
+meta {
+  name: Get Destinations in Destination List
+  type: http
+  seq: 17
+}
+
+get {
+  url: https://api.sse.cisco.com/policies/v2/destinationlists/{{destinationListId}}/destinations
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~page: 
+  ~limit: 
+}
+
+vars:pre-request {
+  destinationListId: 
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Create Authorization Token
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://api.sse.cisco.com/auth/v2/token
+  body: formUrlEncoded
+  auth: basic
+}
+
+auth:basic {
+  username: {{api_key}}
+  password: {{api_key_secret}}
+}
+
+body:form-urlencoded {
+  grant_type: client_credentials
+}
+
+script:post-response {
+  console.log("Token Response (res.body):", res.body);
+  
+  if (res.body && res.body.access_token) {
+    bru.setVar("access_token", res.body.access_token);
+    console.log("✅ Set collection variable: access_token =", res.body.access_token);
+  } else {
+    console.error("❌ access_token not found in response body");
+  }
+}

@@ -1,0 +1,18 @@
+meta {
+  name: Create Resource Connector Group
+  type: http
+  seq: 7
+}
+
+post {
+  url: https://api.sse.cisco.com/deployments/v2/connectorGroups
+  body: json
+  auth: inherit
+}
+
+body:form-urlencoded {
+  environment: "container"
+  location: "us-west-2"
+  name: "DevNet2"
+  ~forwardDNS: 
+}

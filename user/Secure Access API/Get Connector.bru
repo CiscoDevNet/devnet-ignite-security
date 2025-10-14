@@ -1,0 +1,15 @@
+meta {
+  name: Get Connector
+  type: http
+  seq: 10
+}
+
+get {
+  url: https://api.sse.cisco.com/deployments/v2/connectorAgents/{{id}}
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  id: 
+}

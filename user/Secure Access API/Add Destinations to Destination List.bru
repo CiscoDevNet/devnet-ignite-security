@@ -1,0 +1,15 @@
+meta {
+  name: Add Destinations to Destination List
+  type: http
+  seq: 18
+}
+
+post {
+  url: https://api.sse.cisco.com/policies/v2/destinationlists/{{destinationListId}}/destinations
+  body: json
+  auth: inherit
+}
+
+vars:pre-request {
+  destinationListId: 
+}

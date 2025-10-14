@@ -1,0 +1,21 @@
+meta {
+  name: List Roaming Computers
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://api.sse.cisco.com/deployments/v2/roamingcomputers
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~page: 
+  ~limit: 
+  ~name: 
+  ~status: 
+  ~swgStatus: 
+  ~lastSyncBefore: 
+  ~lastSyncAfter: 
+}

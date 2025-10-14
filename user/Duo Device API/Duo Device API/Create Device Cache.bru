@@ -1,0 +1,15 @@
+meta {
+  name: Create Device Cache
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://{{duo_api_hostname}}/device/v1/management_systems/{{duo_mkey}}/device_cache
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  active: True
+}

@@ -1,0 +1,126 @@
+meta {
+  name: Duo Admin API
+  seq: 1
+}
+
+auth {
+  mode: none
+}
+
+vars:pre-request {
+  duo_ikey: DIUKVTCS6GI2TH3MV7T4
+  duo_skey: LgdGnLsoQYS4nPyatkhFLKZnaWIY1Ybxzzqe78MP
+  duo_api_hostname: api-1fe4388f.duosecurity.com
+}
+
+script:pre-request {
+  /* ──────────────────────────────────────────────────────────────
+     Duo HMAC Signer for Bruno (Path Variable-Safe)
+     ────────────────────────────────────────────────────────────── */
+  
+  /* ========== Duo creds ========== */
+  const ikey = bru.getCollectionVar("duo_ikey") ?? bru.getEnvVar("duo_ikey");
+  const skey = bru.getCollectionVar("duo_skey") ?? bru.getEnvVar("duo_skey");
+  if (!ikey || !skey) throw new Error("Missing duo_ikey or duo_skey");
+  
+  /* ========== URL / method ========== */
+  const rawUrl = bru.interpolate(req.getUrl());
+  const [, urlHost, urlPathRaw] =
+    rawUrl.match(/^https?:\/\/([^/]+)(\/[^?#]*)?/) || [];
+  if (!urlHost) throw new Error("Bad URL: " + rawUrl);
+  const urlPath = urlPathRaw || "/";
+  const method  = req.getMethod().toUpperCase();
+  const ctype   = (req.headers?.["content-type"] || "").toLowerCase();
+  
+  /* ========== Host override (optional) ========== */
+  const hostRaw = bru.getCollectionVar("duo_api_hostname") ??
+                  bru.getEnvVar("duo_api_hostname") ??
+                  urlHost;
+  
+  /* ========== Decide v5 signer ========== */
+  const useV5 =
+    /\/v3\//.test(urlPath) ||                 // standard v3
+    /\/skey$/.test(urlPath) ||                // v1 secret fetch
+    /^\/admin\/v2\/policies(\/.*)?$/.test(urlPath); // v2 policies
+  console.log("DEBUG useV5 =", useV5, "for path", urlPath);
+  
+  /* ========== Duo Date ========== */
+  const date = useV5
+    ? new Date().toUTCString()
+    : new Date().toUTCString().replace("GMT", "-0000");
+  bru.setVar("duo_date", date);
+  
+  /* ========== Helpers ========== */
+  function deepSort(o) {
+    if (Array.isArray(o)) return o.map(deepSort);
+    if (o && typeof o === "object" && o.constructor === Object)
+      return Object.keys(o).sort().reduce((acc, k) => (acc[k] = deepSort(o[k]), acc), {});
+    return o;
+  }
+  function canonForm(obj) {
+    return Object.keys(obj).sort().map(k =>
+      `${encodeURIComponent(k)}=${encodeURIComponent(obj[k])}`).join("&");
+  }
+  
+  /* ========== paramStr & bodyRaw ========== */
+  let paramStr = "";
+  let bodyRaw  = "";
+  const bodyIsObj = req.body && typeof req.body === "object" && !Array.isArray(req.body);
+  
+  /* JSON endpoints --------------------------------------------------- */
+  
+  
+  if (bodyIsObj && ctype.includes("application/json")) {
+    bodyRaw = JSON.stringify(req.body, null, 2);  // always this, no sorting
+    paramStr = "";
+  }
+  
+  /* Form endpoints --------------------------------------------------- */
+  else if (bodyIsObj && ctype.includes("x-www-form-urlencoded")) {
+    paramStr = canonForm(req.body);
+    bodyRaw  = paramStr;
+  }
+  /* GET / HEAD bodies are empty -------------------------------------- */
+  if (["GET", "HEAD"].includes(method)) bodyRaw = "";
+  
+  /* Debug dumps ------------------------------------------------------ */
+  console.log("==== DEBUG body ====");
+  console.log(JSON.stringify(req.body ?? {}, null, 2));
+  console.log("DEBUG bodyRaw →", bodyRaw);
+  
+  /* ========== Canonical string & HMAC ========== */
+  let stringToSign, sigHex;
+  
+  if (useV5) {
+    stringToSign = [
+      date,
+      method,
+      hostRaw.toLowerCase(),
+      urlPath,
+      paramStr,
+      CryptoJS.SHA512(bodyRaw).toString(CryptoJS.enc.Hex),
+      CryptoJS.SHA512("").toString(CryptoJS.enc.Hex)
+    ].join("\n");
+    sigHex = CryptoJS.HmacSHA512(stringToSign, skey).toString(CryptoJS.enc.Hex);
+  } else {
+    stringToSign = [
+      date,
+      method,
+      hostRaw.toLowerCase(),
+      urlPath,
+      paramStr
+    ].join("\n");
+    sigHex = CryptoJS.HmacSHA1(stringToSign, skey).toString(CryptoJS.enc.Hex);
+  }
+  
+  /* ========== Set headers ========== */
+  const token = btoa(`${ikey}:${sigHex}`);
+  req.setHeader("Authorization", `Basic ${token}`);
+  req.setHeader("Date", date);
+  
+  /* ========== Final debug ========== */
+  console.log("STRING TO SIGN →\n" + stringToSign);
+  console.log("HEX SIG         →", sigHex);
+  console.log("AUTH HEADER     → Basic " + token);
+  
+}

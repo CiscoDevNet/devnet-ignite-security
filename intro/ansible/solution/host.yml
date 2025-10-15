@@ -3,9 +3,10 @@ all:
     fmc:
       ansible_host:
       ansible_network_os: cisco.fmcansible.fmc
-      ansible_user:
-      ansible_password:
+      ansible_facts_modules: cisco.fmcansible.fmc_facts
+      ansible_httpapi_cdfmc: True
+      ansible_httpapi_token:
       ansible_httpapi_port: 443
       ansible_httpapi_use_ssl: True
-      ansible_httpapi_validate_certs: False
+      ansible_httpapi_validate_certs: True
       name:

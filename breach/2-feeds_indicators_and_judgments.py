@@ -138,6 +138,7 @@ def create_feed(host,access_token,indicator_id,feed_name):
     
 
 if __name__=="__main__":
+    # version 20251017
     print()
     print(cyan('Let\' recap what we aregoing to do',bold=True))    
     print()
@@ -153,22 +154,24 @@ if __name__=="__main__":
     print(cyan('      -> DONE',bold=True))     
     print()
     a = input('let\'s go for it ( type any key ) ? :') 
-    print(cyan('-> Let\s get API credentials\n',bold=True)) 
+    print(cyan('-> Let\'s get API credentials\n',bold=True)) 
     with open('config.txt','r') as file:
         text_content=file.read()
     client_id,client_password,host_for_token,host,conure = parse_config(text_content) # parse config.txt
-    access_token=get_ctr_token(host_for_token,client_id,client_password)
-    '''
     fa = open("ctr_token.txt", "r")
     access_token = fa.readline()
     fa.close()
-    host="https://private.intel.eu.amp.cisco.com"    
-    '''
+    test_tenant=check_cnx_to_tenant(host_for_token,access_token)
+    if test_tenant==401:
+        print(red('Wrong Token',bold=True))
+        access_token=ask_for_a_token()
     print(yellow('-> First let\'s create the Indicator',bold=True)) 
-    indicator_name=input(yellow('\nEnter Indicator Name ( default : DevNet_Indicator_for_risky_IP_Addresses ): ',bold=True))
+    indicator_name=input(yellow('\nEnter Indicator Name ( default : DevNet_Indicator_for_risky_IP_Addresses ) or just your name ( ex : jdoe ): ',bold=True))
     indicator_name=indicator_name.strip()
     if indicator_name=='':
         indicator_name='DEVNET_Indicator_for_risky_IP_Addresses'
+    else:
+        indicator_name=indicator_name+'_DEVNET_Indicator_for_risky_IP_Addresses'
     print(magenta(f'\n--> CALL  A SUB FUNCTION : create the indicator {indicator_name}',bold=True))    
     indicator_type='IPv4'
     description='Example of Indicator for risky IP Addresses'
@@ -186,10 +189,12 @@ if __name__=="__main__":
         file.write(indicator_id)
     a = input(white('\nOK Press Enter for Next Step...',bold=True)) 
     print(cyan('\n--> Now let\'s create the Feed',bold=True))
-    feed_name=input(yellow('\nEnter a Feed Name ( default : DevNet_Feed_for_risky_IP_Addresses ): ',bold=True))
+    feed_name=input(yellow('\nEnter a Feed Name ( default : DevNet_Feed_for_risky_IP_Addresses ) or just your name ( ex : jdoe ): ',bold=True))
     feed_name=feed_name.strip()
     if feed_name=='':
         feed_name='DevNet_Feed_for_risky_IP_Addresses'
+    else:
+        feed_name=feed_name+'_DevNet_Feed_for_risky_IP_Addresses'
     print(magenta(f'\n--> CALL  A SUB FUNCTION : create the feed : {feed_name}',bold=True))
     feed_id,feed_url,status_code=create_feed(host,access_token,indicator_id,feed_name)
     print('\nstatus code : ',yellow(status_code,bold=True))           

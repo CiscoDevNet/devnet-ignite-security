@@ -66,7 +66,7 @@ def get_incidents(host,access_token,client_id,client_password,host_for_token):
                 print(str(index),' : ',item['title'])
                 index+=1
         else:
-            print(red('\nThere is no Incident yet in this tenant !',bold=True))
+            print(red('\nThere is no Incidents yet in this tenant !',bold=True))
             print(white('No Problem you must try again when you have Incidents',bold=True))
             sys.exit()
         if index>=limit-1:

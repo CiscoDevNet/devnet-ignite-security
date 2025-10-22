@@ -1,6 +1,6 @@
 profil_name=XDR Tenant
 ctr_client_id=client-a796e9f3-705c-4b63-b431-1a6165139e55
-ctr_client_password=tEssYom1GkmMrrlRKVxx27yrrgbb9Oypm_x-bUKFycZTYpeIfCoeYw
+ctr_client_password=tEssYom2GkmMrrlRKVxx19yrrgbb0Oypm_x-bUKFycZTYpeIfCoeYw
 host=https://private.intel.amp.cisco.com
 host_for_token=https://visibility.amp.cisco.com
 conure=https://conure.us.security.cisco.com

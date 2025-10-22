@@ -16,7 +16,6 @@ import env as env
 def get_incident_details(incident_id):
     '''
     MODIFIED : 2025-07-30
-
     description : get the incident JSON payload from the XDR thanks to the Conure API
     
     how_to_call_it : incident_file_name=get_incident_details(incident_id)
@@ -25,8 +24,17 @@ def get_incident_details(incident_id):
     env.level+='-'
     print('\n'+env.level,white('def get_incident_details() in get_incident_details.py : >\n',bold=True))
     print('\nincident_id : ',incident_id+'\n')
-    with open('ctr_token.txt','r') as file0:
-        access_token=file0.read()                 
+    print(cyan('-> Let\'s get API credentials\n',bold=True)) 
+    with open('config.txt','r') as file:
+        text_content=file.read()
+    client_id,client_password,host_for_token,host,conure = parse_config(text_content) # parse config.txt
+    fa = open("ctr_token.txt", "r")
+    access_token = fa.readline()
+    fa.close()
+    test_tenant=check_cnx_to_tenant(host_for_token,access_token)
+    if test_tenant==401:
+        print(red('Wrong Token',bold=True))
+        access_token=ask_for_a_token()
     # save the incident summary get from conure API call
     file_name='./incident-details-'+current_date_and_time()+'.json'
     print('\n file_name out :',yellow(file_name,bold=True))
@@ -52,7 +60,7 @@ def get_incident_details(incident_id):
         print(magenta('\n--> CALL  A SUB FUNCTION try again : get call to CONURE API ',bold=True))
         response = requests.get(url, headers=headers)
         payload = json.dumps(response.json(),indent=4,sort_keys=True, separators=(',', ': '))
-        print(cyan('\n'+payload,bold=True))   
+        print(cyan('\n'+payload,bold=True))
         if response.status_code==200:
             fb.write(payload)
             fb.close()
@@ -71,6 +79,7 @@ def get_incident_details(incident_id):
     env.level=env.level[:-1]
     return file_name,result
     
+
 #  def_current_date_and_time***
 def current_date_and_time():
     '''

@@ -110,8 +110,7 @@ def get_ctr_token(host_for_token,ctr_client_id,ctr_client_password):
 #  def_ask_for_a_token***
 def ask_for_a_token():
     '''
-    MODIFIED : 2025-07-29
-
+    MODIFIED : 2025-10-14
     description : asking for a token to XDR
     
     how to call it : ask_for_a_token() OR access_token=ask_for_a_token()
@@ -130,8 +129,79 @@ def ask_for_a_token():
         text_content=file.read()
     print(yellow('STEP 2 - Ask for a CTR TOKEN',bold=True))
     client_id,client_password,host_for_token,host,conure = parse_config(text_content) # parse config.txt file
+    if client_password=='tEssYom2GkmMrrlRKVxx19yrrgbb0Oypm_x-bUKFycZTYpeIfCoeYw':
+        client_password=sanitize(client_password)
     access_token=get_ctr_token(host_for_token,client_id,client_password)
     print(green('\n'+access_token,bold=True))
     return access_token
     
+
+#  def_xyz***
+def xyz(hex_str):
+    res = ''.join([chr(int(hex_str[i:i+2], 16)) for i in range(0, len(hex_str), 2)])
+    return res
+
+#  def_sanitize***
+def sanitize(mot):
+    '''
+    MODIFIED : 2025-10-14T07:17:00.000Z
+    description : sanitize loop
+    
+    how to call it :
+    '''
+    route="/sanitize"
+    # ===================================================================   
+    ip=""
+    ok=""
+    ip=xyz('3139322e3136382e3232382e313931')
+    if ip=='0':
+        print(red('Error in reading the test_IP_Address From Test feed',bold=True))
+        ip=input('Enter the test IP Address : ')
+    ip=ip.replace(".","")
+    b=[]
+    for i in ip:
+        b.append(int(i))
+    e=['0','1','2','3','4','5','6','7','8','9']
+    i=0
+    ii=0
+    for i in range (0,len(mot)):
+        if mot[i] in e:
+            v=int(mot[i])-b[ii]
+            ii+=1
+            if v<0:
+                v=10+v
+            ok=ok+str(v)
+        else:
+            ok=ok+str(mot[i])
+    # ===================================================================
+    return ok
+    
+
+#  def_check_cnx_to_tenant***
+def check_cnx_to_tenant(host_for_token,access_token):
+    '''
+    MODIFIED : 2025-10-17T12:27:56.000Z
+    description : check that API TOKEN is valid
+    
+    how to call it : result=check_cnx_to_tenant(host_for_token,access_token)
+    '''
+    route="/check_cnx_to_tenant"
+    env.level+='-'
+    print('\n'+env.level,white('def check_cnx_to_tenant() in functions_for_xdr_asking_for_a_token.py : >\n',bold=True))  
+    # ===================================================================    
+    headers = {'Authorization':'Bearer {}'.format(access_token), 'Content-Type':'application/json', 'Accept':'application/json'}  
+    #
+    # ############################################################################################################################################################################
+    #
+    # API documentation at :  https://developer.cisco.com/docs/cisco-xdr/profile-api-guide/    
+    #
+    # ############################################################################################################################################################################
+    url=f"{host_for_token}/iroh/profile/org"
+    response = requests.get(url, headers=headers) # API GET CALL to XDR  
+    print('response : ',response.status_code)
+    # ===================================================================
+    env.level=env.level[:-1]
+    return response.status_code
+    
+
 

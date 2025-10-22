@@ -154,7 +154,6 @@ def create_a_sighting_json(log):
 def create_an_xdr_incident(all_sightings,ip_source,incident_title):
     '''
     MODIFIED : 2025-07-25
-
     description : takes sighting in input and create the XDR Incident
     '''
     route="/create_an_xdr_incident"
@@ -204,39 +203,39 @@ def create_an_xdr_incident(all_sightings,ip_source,incident_title):
         indicator_id=file.read()
     indicator_list.append(indicator_id) # add the indicator_id to the indicator_list
     for this_sighting in all_sightings:    # go to every sightings one by one
-        print('\n this sighting : \n',cyan(this_sighting,bold=True))         
-        print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))   
+        print('\n this sighting : \n',cyan(this_sighting,bold=True))
+        print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))
         sighting_xid = create_sighting_xid("Sighting created for asset enrichment test") # call a function
         sighting_transient_id="transient:"+sighting_xid
         print("\n  - This Sighting_transient_id : ",cyan(sighting_transient_id,bold=True))
-        print("\n  - Create This Sighting json payload with : ",cyan(sighting_transient_id,bold=True)) 
-        print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))               
+        print("\n  - Create This Sighting json payload with : ",cyan(sighting_transient_id,bold=True))
+        print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))
         new_sighting_id,sighting=create_sighting_json(sighting_xid,this_sighting) # call a function
         sightings.append(json.loads(sighting)) # adding this sighting to sighting list
-        print('\n   -- ok done')                    
-        print(yellow("\n- > lets Create Relationship payload for sighting to Indicator relationship",bold=True))               
-        print('\nindicator_list :\n',cyan(indicator_list,bold=True))              
+        print('\n   -- ok done')
+        print(yellow("\n- > lets Create Relationship payload for sighting to Indicator relationship",bold=True))
+        print('\nindicator_list :\n',cyan(indicator_list,bold=True))
         for indicator in indicator_list:
             the_new_indicator_id=indicator.split('***')[0]
-            print('\n--- OK lets create the indicator relationship')              
-            print('\nnew indicator id :\n',cyan(the_new_indicator_id,bold=True))   
-            print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))   
-            nombre=random.randint(1, 10)                 
-            random_xid=id_generator(nombre, "6793YUIO")     # call a function  
-            print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))                     
+            print('\n--- OK lets create the indicator relationship')
+            print('\nnew indicator id :\n',cyan(the_new_indicator_id,bold=True))
+            print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))
+            nombre=random.randint(1, 10)
+            random_xid=id_generator(nombre, "6793YUIO")     # call a function
+            print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))
             relationship_xid=generate_relationship_xid(the_new_indicator_id,random_xid) # call a function
             print('\nrelationship_xid : ',cyan(relationship_xid,bold=True))
-            print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))                     
+            print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))
             relationship=create_relationship_object(sighting_transient_id,the_new_indicator_id,relationship_xid,"sighting-of","XDR Side Car")   # call a function
-            relationships_new.append(json.loads(relationship)) # adding this relationship to  relationship list    
+            relationships_new.append(json.loads(relationship)) # adding this relationship to  relationship list
         print(yellow("\n- > Create Relationship payload for sighting to Incident memberships. Sighting is member-of Incident",bold=True))
-        print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))      
-        nombre=random.randint(1, 10)                         
-        random_xid=id_generator(nombre, "6723YUIO") 
+        print(magenta('\n--> CALL  A SUB FUNCTION :',bold=True))
+        nombre=random.randint(1, 10)
+        random_xid=id_generator(nombre, "6723YUIO")
         relationship_xid=generate_relationship_xid(sighting_transient_id,random_xid) # call a function
-        print(magenta('\--> CALL  A SUB FUNCTION :',bold=True))                  
+        print(magenta('\--> CALL  A SUB FUNCTION :',bold=True))
         relationship=create_relationship_object(sighting_transient_id,incident_xid,relationship_xid,"member-of","DevNet Ignit Lab")    # call a function
-        relationships_new.append(json.loads(relationship)) # adding this relationship to  relationship list   
+        relationships_new.append(json.loads(relationship)) # adding this relationship to  relationship list
     print('\n sightings :\n ',cyan(sightings,bold=True))
     print('\n relationships :\n ',cyan(relationships_new,bold=True))
     #
@@ -252,16 +251,16 @@ def create_an_xdr_incident(all_sightings,ip_source,incident_title):
     add_a_jugdment_for_source_ip=1 # 1 = we create a judgment for the source IP address, 0 = No we don't create a judgdment
     if add_a_jugdment_for_source_ip==1:
         judgments_new.append(create_judgment_json(ip_source))
-        print('\n judgments_new :\n ',cyan(judgments_new,bold=True)) 
-        print(yellow("\n- OK Done ",bold=True))  
+        print('\n judgments_new :\n ',cyan(judgments_new,bold=True))
+        print(yellow("\n- OK Done ",bold=True))
         print(yellow("\n- Now add a relationship for this judgment to related indicator",bold=True))
-        indicator_id=indicator_list[0] 
-        print('\nindicator_id : ',cyan(indicator_id,bold=True))        
+        indicator_id=indicator_list[0]
+        print('\nindicator_id : ',cyan(indicator_id,bold=True))
         relationship_xid=generate_relationship_xid(judgments_new[0]['id'],indicator_id)   # call a function
-        relationship_object={}    
+        relationship_object={}
         relationship_object = create_relationship_object(judgments_new[0]['id'], indicator_id, relationship_xid, "element-of","DevNet Ignite Labr") # call a function
-        print('\n New relationship_object to add into list :\n ',yellow(relationship_object,bold=True)) 
-        relationships_new.append(json.loads(relationship_object)) # adding this relationship to  relationship list   
+        print('\n New relationship_object to add into list :\n ',yellow(relationship_object,bold=True))
+        relationships_new.append(json.loads(relationship_object)) # adding this relationship to  relationship list
     print('\n final relationship list :\n ',yellow(relationships_new,bold=True))
     #
     # => Create judgment payload for the malicious observable and attach it to Indicator = OK Done
@@ -296,8 +295,17 @@ def create_an_xdr_incident(all_sightings,ip_source,incident_title):
     #
     # Let's read the Token We created prior:
     # 
-    with open('./ctr_token.txt') as file:
-        access_token=file.read()
+    print(cyan('-> Let\'s get API credentials\n',bold=True)) 
+    with open('config.txt','r') as file:
+        text_content=file.read()
+    client_id,client_password,host_for_token,host,conure = parse_config(text_content) # parse config.txt
+    fa = open("ctr_token.txt", "r")
+    access_token = fa.readline()
+    fa.close()
+    test_tenant=check_cnx_to_tenant(host_for_token,access_token)
+    if test_tenant==401:
+        print(red('Wrong Token',bold=True))
+        access_token=ask_for_a_token()
     resultat=post_bundle(bundle_in_json,access_token,host)
     print('\n Bundle API call result : \n',green(resultat,bold=True)) 
     print(yellow("\n- OK API CALL SENT TO XDR... Check if the Incident had been created ",bold=True))  
@@ -305,6 +313,7 @@ def create_an_xdr_incident(all_sightings,ip_source,incident_title):
     env.level=env.level[:-1]
     return(resultat)
   
+
 #  def_current_date_time***
 def current_date_time():
     '''
@@ -366,24 +375,24 @@ def create_incident_json(incident_title,description,source,short_description,tlp
     
 if __name__=="__main__":
     '''
-        version : 2025-09-10
+        version : 2025-10-17
     '''
     print(yellow('\nSTARTING HERE => ',bold=True))       
     print(yellow('\nNEXT : Load connection parameters to XDR Tenant => ',bold=True))  
     #
     # Load API connection details to XDR tenant for futur utilization :
     #    
+    print(cyan('-> Let\'s get API credentials\n',bold=True)) 
     with open('config.txt','r') as file:
         text_content=file.read()
-    client_id,client_password,host_for_token,host,conure = parse_config(text_content)    
-    #
-    # Load API connection details to XDR tenant for futur utilization :
-    #
-    # Ask for an API token to XDR :
-    #  
-    print(yellow('\nNEXT : Asking for an API token => ',bold=True))    
-    a = input('Press Enter : ')        
-    access_token=get_ctr_token(host_for_token,client_id,client_password)
+    client_id,client_password,host_for_token,host,conure = parse_config(text_content) # parse config.txt
+    fa = open("ctr_token.txt", "r")
+    access_token = fa.readline()
+    fa.close()
+    test_tenant=check_cnx_to_tenant(host_for_token,access_token)
+    if test_tenant==401:
+        print(red('Wrong Token',bold=True))
+        access_token=ask_for_a_token()
     #
     # Ask for an API token to XDR = OK DONE
     #     
@@ -419,7 +428,13 @@ if __name__=="__main__":
     #
     # Create the Incident :
     #
-    incident_title="Secure Firewall IPS Alerts for Src : "+log_objects['SrcIP']+" to Dst : "+log_objects['DstIP'] # incident title
+    your_name=input('Enter your name ( ex : jdoe ) : ')
+    your_name=your_name.strip()
+    if your_name=='':
+        current_time = datetime.utcnow()
+        current_time = current_time.strftime("%Y-%m-%d-%H%M%S")
+        your_name='devnet_users_'
+    incident_title=your_name+" - Secure Firewall IPS Alerts for Src : "+log_objects['SrcIP']+" to Dst : "+log_objects['DstIP'] # incident title
     result=create_an_xdr_incident(sighting_list,log_objects['SrcIP'],incident_title) # call function   
     print(result)
     if result:

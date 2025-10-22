@@ -64,22 +64,30 @@ def inspect_the_text(host,access_token,text):
 #  def_create_judgments_json_payload_and_attach_to_feed***
 def create_judgments_and_attach_to_feed(data,indicator_id,host):
     '''
-    MODIFIED : 2025-07-30
-
+    MODIFIED : 2025-10-17
     description : Create one or several judgment located into data, into XDR. And link them to an indicator in order to add them into the feed attached to the indicator
     '''
     route="/create_judgments_and_attach_to_feed"
     env.level+='-'
     print('\n'+env.level,white('def create_judgments_and_attach_to_feed() in add_ip_addresses_into_feeds.py : >\n',bold=True))
     print(cyan(f"- indicator_id : {indicator_id}\n",bold=True))
-    with open('ctr_token.txt','r') as file0:
-        access_token=file0.read()
+    print(cyan('-> Let\'s get API credentials\n',bold=True)) 
+    with open('config.txt','r') as file:
+        text_content=file.read()
+    client_id,client_password,host_for_token,host,conure = parse_config(text_content) # parse config.txt
+    fa = open("ctr_token.txt", "r")
+    access_token = fa.readline()
+    fa.close()
+    test_tenant=check_cnx_to_tenant(host_for_token,access_token)
+    if test_tenant==401:
+        print(red('Wrong Token',bold=True))
+        access_token=ask_for_a_token()
     nb=0
     judgments_new=[]
     for item in data:
-        print(yellow(f"\n- item : {item}\n",bold=True))     
+        print(yellow(f"\n- item : {item}\n",bold=True))
         if nb<1000:
-              # here under create the judgment JSON payload
+                # here under create the judgment JSON payload
             judgment_object = {}
             judgment_object["schema_version"] = "1.0.19"
             judgment_object["observable"] = item["observable"]
@@ -94,14 +102,14 @@ def create_judgments_and_attach_to_feed(data,indicator_id,host):
             judgment_object["confidence"] = item["confidence"]
             judgment_external_id = create_judgment_external_id(judgment_object) # call a function
             judgment_object["external_ids"] = [judgment_external_id]
-            judgment_object["id"] = "transient:" + judgment_external_id  
+            judgment_object["id"] = "transient:" + judgment_external_id
             # here under to customize manually
             judgment_object["tlp"] = item["tlp"]
-            judgment_object["source"] = item["source"]           
+            judgment_object["source"] = item["source"]
             judgments_new.append(judgment_object)
             nb+=1
         else:
-              # we go to this branch because we have more than 1000 judgments. 
+                # we go to this branch because we have more than 1000 judgments.
             judgment_transient_ids = [judgement["id"] for judgement in judgments_new] # create a transient ID for judgment
             relationships_new = [] # create the new relatioship list
             for judgment_id in judgment_transient_ids:
@@ -110,7 +118,7 @@ def create_judgments_and_attach_to_feed(data,indicator_id,host):
                 create_relationship_json_payload(relationship_object,judgment_id,indicator_id,relationship_xid)  # create a relationship for judgment to indicator
                 relationships_new.append(relationship_object) # add new relatioship to relationship list
             # here under lets create the Bundle JSON Payload
-            bundle_object = {} 
+            bundle_object = {}
             source="DevNet Ignite Lab"
             incidents=[]
             sightings=[]
@@ -119,7 +127,7 @@ def create_judgments_and_attach_to_feed(data,indicator_id,host):
             #relationships_new=[]
             create_bundle_json(source,incidents,sightings,indicators,judgments_new, relationships_new) # create the JSON payload
             bundle_object = json.dumps(bundle_object)
-            post_bundle(bundle_object,access_token,host) # call a function post this bundle with 100 entries            
+            post_bundle(bundle_object,access_token,host) # call a function post this bundle with 100 entries
             judgments_new.clear()
             nb=0
     judgment_transient_ids = [judgement["id"] for judgement in judgments_new] # create a transient ID for judgment

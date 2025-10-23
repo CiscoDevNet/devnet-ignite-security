@@ -94,6 +94,17 @@ variable "sccfm_api_token" {
   type          = string 
 }
 
+# AWS Access Key
+variable "var_aws_access_key_id" {
+  type          = string
+}
+
+# AWS Secret Access Key
+variable "var_aws_secret_access_key" {
+  type          = string
+  sensitive     = true
+}
+
 # variable "fmc_host" {
 #   description   = "FMC Hostname or IP - pass this value using tfvars file"
 #   type          = string

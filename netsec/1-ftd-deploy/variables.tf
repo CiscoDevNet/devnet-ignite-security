@@ -104,8 +104,3 @@ variable "aws_secret_access_key" {
   type          = string
   sensitive     = true
 }
-
-# variable "fmc_host" {
-#   description   = "FMC Hostname or IP - pass this value using tfvars file"
-#   type          = string
-# }

@@ -16,34 +16,34 @@ data "fmc_intrusion_policy" "ips_policy" {
 
 # Network Objects
 resource "fmc_network" "app_subnet" {
-  name        = "${var.env_name}-app_subnet"
+  name        = "${local.env_name}-app_subnet"
   prefix      = aws_subnet.app_subnet.cidr_block
   description = "App Network"
 }
 
 # Host Objects
 resource "fmc_host" "app_server" {
-    name        = "${var.env_name}-app_server"
+    name        = "${local.env_name}-app_server"
     ip          = aws_instance.app.private_ip
     description = "App Server"
 }
 
 # IPS Policy
 resource "fmc_intrusion_policy" "ips_policy" {
-    name            = "${var.env_name}-ips_policy"
+    name            = "${local.env_name}-ips_policy"
     inspection_mode = "DETECTION"
     base_policy_id   = data.fmc_intrusion_policy.ips_policy.id
 }
 
 # Access Control Policy
 resource "fmc_access_control_policy" "access_policy" {
-  name           = "${var.env_name}-Access-Policy"
+  name           = "${local.env_name}-Access-Policy"
   default_action = "BLOCK"
   rules = [
     {
       section            = "mandatory"
       action             = "ALLOW"
-      name               = "${var.env_name}_permit_outbound"
+      name               = "${local.env_name}_permit_outbound"
       enabled            = true
       send_events_to_fmc = true
       log_files          = false
@@ -68,7 +68,7 @@ resource "fmc_access_control_policy" "access_policy" {
     {
       section            = "mandatory"
       action             = "ALLOW"
-      name               = "${var.env_name}_access_to_app_server"
+      name               = "${local.env_name}_access_to_app_server"
       enabled            = true
       send_events_to_fmc = true
       log_files          = false
@@ -110,7 +110,7 @@ resource "null_resource" "wait_for_ftdv_to_finish_booting" {
 
 # Register FTD to FMC
 resource "sccfm_ftd_device" "ftd1" {
-  name = "${var.env_name}-FTDv"
+  name = "${local.env_name}-FTDv"
   licenses = [
     "BASE",
     "MALWARE",
@@ -128,26 +128,26 @@ resource "sccfm_ftd_device_onboarding" "ftd1" {
   depends_on = [null_resource.wait_for_ftdv_to_finish_booting]
 }
 
-# Configure FTD interfaces in FMC
+# Configure FTD interfaces and routes in FMC
 data "fmc_device" "ftd1" {
     depends_on = [sccfm_ftd_device_onboarding.ftd1]
-    name = "${var.env_name}-FTDv"
+    name = "${local.env_name}-FTDv"
 }
 
 resource "fmc_security_zone" "outside_sz" {
-  name           = "${var.env_name}-Outside-sz"
+  name           = "${local.env_name}-Outside-sz"
   interface_type = "ROUTED"
 }
 
 resource "fmc_security_zone" "inside_sz" {
-  name           = "${var.env_name}-Inside-sz"
+  name           = "${local.env_name}-Inside-sz"
   interface_type = "ROUTED"
 }
 
 resource "fmc_device_physical_interface" "outside_int" {
     depends_on = [fmc_security_zone.outside_sz]
     name = "TenGigabitEthernet0/1"
-    logical_name = "${var.env_name}-Outside"
+    logical_name = "${local.env_name}-Outside"
     device_id = data.fmc_device.ftd1.id
     security_zone_id = fmc_security_zone.outside_sz.id
     mtu = 1806
@@ -160,7 +160,7 @@ resource "fmc_device_physical_interface" "outside_int" {
 resource "fmc_device_physical_interface" "inside_int" {
     depends_on = [fmc_security_zone.inside_sz]
     name = "TenGigabitEthernet0/0"
-    logical_name = "${var.env_name}-Inside"
+    logical_name = "${local.env_name}-Inside"
     device_id = data.fmc_device.ftd1.id
     security_zone_id = fmc_security_zone.inside_sz.id
     mtu = 1806
@@ -191,11 +191,24 @@ resource "fmc_device_vni_interface" "vni_int" {
     security_zone_id        = fmc_security_zone.inside_sz.id
 }
 
+resource "fmc_device_ipv4_static_route" "inside_static_route" {
+    device_id               = data.fmc_device.ftd1.id
+    interface_logical_name  = "${local.env_name}-Inside"
+    interface_id            = fmc_device_physical_interface.inside_int.id
+    destination_networks = [
+      {
+        id = "cb7116e8-66a6-480b-8f9b-295191a0940a" # any ipv4
+      }
+    ]
+    metric_value         = 1
+    gateway_host_literal = aws_network_interface.ftd_inside.private_ip
+}
+
 # Configure platform policy
 
 resource "fmc_ftd_platform_settings" "platform_settings" {
-    name        = "${var.env_name}-platform-settings"
-    description = "${var.env_name} platform settings"
+    name        = "${local.env_name}-platform-settings"
+    description = "${local.env_name} platform settings"
 }
 
 resource "fmc_policy_assignment" "platform_policy_assignment" {
@@ -220,7 +233,7 @@ resource "fmc_ftd_platform_settings_http_access" "http_access" {
         interface_objects = [
           {
               id   = fmc_security_zone.inside_sz.id
-              name = "${var.env_name}-Inside-sz"
+              name = "${local.env_name}-Inside-sz"
               type = "SecurityZone"
           }
         ]
@@ -232,6 +245,7 @@ resource "fmc_device_deploy" "ftd-deploy-changed" {
     depends_on = [
         fmc_device_physical_interface.outside_int,
         fmc_device_physical_interface.inside_int,
+        fmc_device_ipv4_static_route.inside_static_route,
         fmc_device_vni_interface.vni_int,
         fmc_ftd_platform_settings_http_access.http_access,
         fmc_policy_assignment.platform_policy_assignment

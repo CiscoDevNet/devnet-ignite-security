@@ -24,7 +24,7 @@ resource "aws_network_interface" "app_if" {
   security_groups = [aws_security_group.app_security_group.id]
   private_ip    = var.app_server
   tags = {
-    Name = "${var.env_name}-app-if"
+    Name = "${local.env_name}-app-if"
   }
 }
 
@@ -38,7 +38,7 @@ resource "aws_instance" "app" {
     device_index         = 0
   }
   tags = {
-    Name = "${var.env_name}-app-instance"
+    Name = "${local.env_name}-app-instance"
   }
 }
 
@@ -46,7 +46,7 @@ resource "aws_instance" "app" {
 resource "aws_eip" "app-EIP" {
   depends_on = [aws_internet_gateway.app_igw, aws_instance.app]
   tags = {
-    Name = "${var.env_name}-app"
+    Name = "${local.env_name}-app"
     app  = "service"
   }
 }

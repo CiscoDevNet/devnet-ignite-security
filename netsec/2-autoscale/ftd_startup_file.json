@@ -1,0 +1,17 @@
+  {
+      "EULA": "accept",
+      "Hostname": "${ftd_hostname}",
+      "ManageLocally":  "No",
+      "AdminPassword": "${ftd_admin_password}",
+      %{ if fmc_reg_key != "" }
+      "FmcRegKey": "${fmc_reg_key}",
+      %{ endif }
+      %{ if fmc_nat_id != "" }
+      "FmcNatId": "${fmc_nat_id}",
+      %{ endif }
+      %{ if fmc_hostname != "" }
+      "FmcIp": "${fmc_hostname}",
+      %{ endif }
+      "IPv4Mode": "dhcp",
+      "IPv6Mode": "disabled"
+  }

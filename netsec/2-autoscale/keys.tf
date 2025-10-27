@@ -10,13 +10,13 @@ resource "tls_private_key" "key_pair" {
 # Save the private key on local file
 resource "local_file" "this" {
   content       = tls_private_key.key_pair.private_key_openssh
-  filename      = "${var.env_name}-private-key.pem"
+  filename      = "${local.env_name}-private-key.pem"
   file_permission = 0600
 }
 
 # Save the public key on AWS
 resource "aws_key_pair" "public_key" {
-  key_name   = "${var.env_name}-${random_string.id.result}-key"
+  key_name   = "${local.env_name}-${random_string.id.result}-key"
   public_key = tls_private_key.key_pair.public_key_openssh
 }
 

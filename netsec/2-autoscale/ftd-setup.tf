@@ -7,7 +7,7 @@
 data "template_file" "ftd_startup_file" {
   template = file("${path.module}/ftd_startup_file.json")
   vars = {
-    ftd_hostname       = "${var.env_name}-FTDv"
+    ftd_hostname       = "${local.env_name}-FTDv"
     fmc_reg_key        = "${sccfm_ftd_device.ftd1.reg_key}"
     fmc_nat_id         = "${sccfm_ftd_device.ftd1.nat_id}"
     ftd_admin_password = random_password.ftd_pass.result
@@ -40,7 +40,7 @@ resource "aws_network_interface" "ftd_management" {
   security_groups = [aws_security_group.allow_egress_ingress_ssh.id]
   private_ips   = [var.ftd_mgmt_private_ip]
   tags = {
-    Name = "${var.env_name}-FTDv-mgmt"
+    Name = "${local.env_name}-FTDv-mgmt"
   }
 }
 
@@ -50,7 +50,7 @@ resource "aws_network_interface" "ftd_diagnostic" {
   subnet_id       = aws_subnet.mgmt_subnet.id
   security_groups = [aws_security_group.allow_all.id]
   tags = {
-    Name = "${var.env_name}-FTDv-diag-interface-1"
+    Name = "${local.env_name}-FTDv-diag-interface-1"
   }
 }
 
@@ -61,7 +61,7 @@ resource "aws_network_interface" "ftd_inside" {
   security_groups   = [aws_security_group.allow_all.id]
   source_dest_check = false
   tags = {
-    Name = "${var.env_name}-FTDv-data-interface-2"
+    Name = "${local.env_name}-FTDv-data-interface-2"
   }
 }
 
@@ -72,7 +72,7 @@ resource "aws_network_interface" "ftd_outside" {
   security_groups   = [aws_security_group.allow_all.id]
   source_dest_check = false
   tags = {
-    Name = "${var.env_name}-FTDv-data-interface-3"
+    Name = "${local.env_name}-FTDv-data-interface-3"
   }
 }
 
@@ -91,6 +91,7 @@ resource "aws_instance" "ftdv" {
   ami           = data.aws_ami.ftdv.id
   instance_type = var.ftdv_instance_size
   key_name      = aws_key_pair.public_key.id
+  monitoring    = true
   metadata_options {
     http_endpoint = "enabled"
   }
@@ -124,7 +125,7 @@ resource "aws_instance" "ftdv" {
   # }
   user_data = data.template_file.ftd_startup_file.rendered
   tags = {
-    Name = "${var.env_name}-FTDv"
+    Name = "${local.env_name}-FTDv"
   }
 
   lifecycle {
@@ -136,7 +137,7 @@ resource "aws_instance" "ftdv" {
 resource "aws_eip" "ftd-mgmt-EIP" {
   depends_on = [aws_internet_gateway.mgmt_igw, aws_instance.ftdv]
   tags = {
-    Name = "${var.env_name}-FTDv"
+    Name = "${local.env_name}-FTDv"
     app  = "service"
   }
 }

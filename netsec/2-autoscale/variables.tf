@@ -4,14 +4,18 @@
 
 # Environment
 
-# Env name is tagged on all resources
-variable "env_name" {
-  type          = string
-  default       = "DevNetBG-Ignite"
+# Env POD number
+variable "env_pod_number" {
+  # Specified as an environment variable in the lab
+  type = number
+  validation {
+    condition     = can(regex("^[0-9]{3}$", var.env_pod_number))
+    error_message = "The pod number must be exactly three digits (0-9)."
+  }
 }
 
 variable "ingress_user_networks" {
-    default = ["151.186.182.0/23", "151.186.192.0/20", "173.38.117.0/24"]
+    default = ["IPADDRESS/32"]
 }
 
 # AWS

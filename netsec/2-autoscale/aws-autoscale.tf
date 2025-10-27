@@ -1,11 +1,12 @@
 resource "aws_cloudformation_stack" "autoscale_cf_stack" {
   count = 1
-  name          = "devnet-autoscale-cf"
+  name          = "${local.env_name}-cf"
   template_body = file("./autoscale/deploy_ngfw_autoscale.yaml")
   capabilities = ["CAPABILITY_AUTO_EXPAND", "CAPABILITY_NAMED_IAM"]
 
   parameters = {
     VpcId: aws_vpc.service_vpc.id
+    PodNumber: var.env_pod_number
     NoOfAZs: 1
     ListOfAZs: var.aws_az
     MgmtInterfaceSG: aws_security_group.allow_egress_ingress_ssh.id

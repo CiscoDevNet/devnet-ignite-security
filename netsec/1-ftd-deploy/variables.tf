@@ -10,11 +10,11 @@ variable "env_name" {
 
 variable "region" {
   type          = string
-  default       = "us-east-1"
+  default       = "us-east-2"
 }
 variable "aws_az" {
   type          = string
-  default       = "us-east-1a"
+  default       = "us-east-2a"
 }
 
 # Service VPC

@@ -2,12 +2,6 @@
 # Variables
 ##############
 
-# Environment name is tagged on all resources
-variable "env_name" {
-  type          = string
-  default       = "POD##-FTDv-terraform-lab"
-}
-
 variable "region" {
   type          = string
   default       = "us-east-2"

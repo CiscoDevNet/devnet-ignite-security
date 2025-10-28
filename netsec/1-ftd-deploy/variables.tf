@@ -5,7 +5,7 @@
 # Environment name is tagged on all resources
 variable "env_name" {
   type          = string
-  default       = "POD##-FTDv_terraform_lab"
+  default       = "POD##-FTDv-terraform-lab"
 }
 
 variable "region" {

@@ -140,9 +140,9 @@ def create_feed(host,access_token,indicator_id,feed_name):
 if __name__=="__main__":
     # version 20251017
     print()
-    print(cyan('Let\' recap what we aregoing to do',bold=True))    
+    print(cyan('Let\' recap what we are going to do',bold=True))    
     print()
-    print(cyan('-> First we will read the config.txt file and parse connexion details',bold=True))
+    print(cyan('-> First we will read the config.txt file and parse connection details',bold=True))
     print(cyan('-> Then we will ask for an API token to XDR',bold=True))    
     print(cyan('-> Then we will create the Indicator',bold=True))
     print(cyan(' -> Then we will create the feed and attach it to the Indicator we created prior',bold=True))    

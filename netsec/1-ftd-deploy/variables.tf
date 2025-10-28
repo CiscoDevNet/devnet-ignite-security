@@ -8,17 +8,6 @@ variable "env_name" {
   default       = "POD##-FTDv_terraform_lab"
 }
 
-# AWS
-# variable "aws_access_key" {
-#   description   = "Pass this value using tfvars file"
-#   type          = string
-#   sensitive     = true
-# }
-# variable "aws_secret_key" {
-#   description   = "Pass this value using tfvars file"
-#   type          = string
-#   sensitive     = true
-# }
 variable "region" {
   type          = string
   default       = "us-east-1"
@@ -73,11 +62,6 @@ variable "ftdv_version" {
   type          = string
   default       = "ftdv-7.7*"
 }
-
-# variable "ftdv_pass" {
-#   type          = string
-#   sensitive     = true
-# }
 
 variable "ftdv_performance_tier" {
   type          = string

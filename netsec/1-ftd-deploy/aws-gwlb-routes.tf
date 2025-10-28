@@ -8,14 +8,14 @@ resource "aws_lb" "gwlb" {
   enable_cross_zone_load_balancing = true
 
   tags = {
-    Name = "${var.env_name}-gwlb"
+    Name = "${local.env_name}-gwlb"
     app  = "service"
   }
 }
 
 # Target group is IP based since FTD's are provisioned with multiple interfaces
 resource "aws_lb_target_group" "ftd" {
-  name        = "${var.env_name}-ftdtg"
+  name        = "${local.env_name}-ftdtg"
   protocol    = "GENEVE"
   vpc_id      = aws_vpc.service_vpc.id
   target_type = "ip"
@@ -28,7 +28,7 @@ resource "aws_lb_target_group" "ftd" {
     protocol = "TCP"
   }
   tags = {
-    Name = "${var.env_name}-lbtg"
+    Name = "${local.env_name}-lbtg"
     app  = "service"
   }
 }
@@ -48,7 +48,7 @@ resource "aws_lb_listener" "cluster" {
     target_group_arn = aws_lb_target_group.ftd.arn
   }
   tags = {
-    Name = "${var.env_name}-gwlb-listener"
+    Name = "${local.env_name}-gwlb-listener"
     app  = "service"
   }
 }
@@ -58,7 +58,7 @@ resource "aws_vpc_endpoint_service" "gwlb" {
   acceptance_required        = false
   gateway_load_balancer_arns = [aws_lb.gwlb.arn]
   tags = {
-    Name = "${var.env_name}-gwlb"
+    Name = "${local.env_name}-gwlb"
     app  = "service"
   }
 }
@@ -69,7 +69,7 @@ resource "aws_vpc_endpoint" "fw" {
   vpc_endpoint_type = aws_vpc_endpoint_service.gwlb.service_type
   vpc_id            = aws_vpc.app_vpc.id
   tags = {
-    Name = "${var.env_name}-gwlbe"
+    Name = "${local.env_name}-gwlbe"
   }
 }
 
@@ -94,7 +94,7 @@ resource "aws_vpc_endpoint_subnet_association" "fw" {
 resource "aws_route_table" "app_route_table" {
   vpc_id = aws_vpc.app_vpc.id
   tags = {
-    Name = "${var.env_name}-app-rt"
+    Name = "${local.env_name}-app-rt"
   }
 }
 
@@ -118,7 +118,7 @@ resource "aws_route_table_association" "app1_association" {
 resource "aws_route_table" "gwlbe_route_table" {
   vpc_id = aws_vpc.app_vpc.id
   tags = {
-    Name = "${var.env_name}-gwlb-rt"
+    Name = "${local.env_name}-gwlb-rt"
   }
 }
 
@@ -142,7 +142,7 @@ resource "aws_route_table_association" "gwlbe_association" {
 # resource "aws_route_table" "app_igw_route_table" {
 #   vpc_id = aws_vpc.app_vpc.id
 #   tags = {
-#     Name = "${var.env_name}-app-igw-rt"
+#     Name = "${local.env_name}-app-igw-rt"
 #   }
 # }
 

@@ -16,34 +16,34 @@ data "fmc_intrusion_policy" "ips_policy" {
 
 # Network Objects
 resource "fmc_network" "app_subnet" {
-  name        = "${var.env_name}-app_subnet"
+  name        = "${local.env_name}-app_subnet"
   prefix      = aws_subnet.app_subnet.cidr_block
   description = "App Network"
 }
 
 # Host Objects
 resource "fmc_host" "app_server" {
-    name        = "${var.env_name}-app_server"
+    name        = "${local.env_name}-app_server"
     ip          = aws_instance.app.private_ip
     description = "App Server"
 }
 
 # IPS Policy
 resource "fmc_intrusion_policy" "ips_policy" {
-    name            = "${var.env_name}-ips_policy"
+    name            = "${local.env_name}-ips_policy"
     inspection_mode = "DETECTION"
     base_policy_id   = data.fmc_intrusion_policy.ips_policy.id
 }
 
 # Access Control Policy
 resource "fmc_access_control_policy" "access_policy" {
-  name           = "${var.env_name}-Access-Policy"
+  name           = "${local.env_name}-Access-Policy"
   default_action = "BLOCK"
   rules = [
     {
       section            = "mandatory"
       action             = "ALLOW"
-      name               = "${var.env_name}_permit_outbound"
+      name               = "${local.env_name}_permit_outbound"
       enabled            = true
       send_events_to_fmc = true
       log_files          = false
@@ -65,7 +65,7 @@ resource "fmc_access_control_policy" "access_policy" {
     {
       section            = "mandatory"
       action             = "ALLOW"
-      name               = "${var.env_name}_access_to_app_server"
+      name               = "${local.env_name}_access_to_app_server"
       enabled            = true
       send_events_to_fmc = true
       log_files          = false
@@ -107,7 +107,7 @@ resource "null_resource" "wait_for_ftdv_to_finish_booting" {
 
 # Register FTD to FMC
 resource "sccfm_ftd_device" "ftd1" {
-  name = "${var.env_name}-FTDv"
+  name = "${local.env_name}-FTDv"
   licenses = [
     "BASE",
     "MALWARE",

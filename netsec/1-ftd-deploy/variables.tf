@@ -2,6 +2,20 @@
 # Variables
 ##############
 
+# Env POD number
+variable "env_pod_number" {
+  # Specified as an environment variable in the lab
+  type = number
+  validation {
+    condition     = can(regex("^[0-9]{3}$", var.env_pod_number))
+    error_message = "The pod number must be exactly three digits (0-9)."
+  }
+}
+
+variable "ingress_user_networks" {
+    default = ["IPADDRESS/32"]
+}
+
 variable "region" {
   type          = string
   default       = "us-east-2"

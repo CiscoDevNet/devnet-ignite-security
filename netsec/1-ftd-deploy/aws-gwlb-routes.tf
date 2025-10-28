@@ -2,7 +2,7 @@
 
 # Gateway Load Balancing related resources
 resource "aws_lb" "gwlb" {
-  name                             = "${var.env_name}-gwlb"
+  name                             = "${local.env_name}-gwlb"
   load_balancer_type               = "gateway"
   subnets                          = [aws_subnet.outside_subnet.id]
   enable_cross_zone_load_balancing = true

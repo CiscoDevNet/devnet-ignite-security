@@ -30,7 +30,7 @@ resource "aws_instance" "app" {
     aws_security_group.app_allow_all.id
   ]
   tags = {
-    Name = "${var.env_name}-app-instance"
+    Name = "${local.env_name}-app-instance"
   }
 }
 

@@ -5,7 +5,7 @@ resource "aws_vpc" "service_vpc" {
   enable_dns_hostnames = true
   instance_tenancy     = "default"
   tags = {
-    Name = "${var.env_name}"
+    Name = "${local.env_name}"
   }
 }
 
@@ -15,7 +15,7 @@ resource "aws_subnet" "mgmt_subnet" {
   cidr_block        = var.mgmt_subnet
   availability_zone = var.aws_az
   tags = {
-    Name = "${var.env_name}-mgmt"
+    Name = "${local.env_name}-mgmt"
   }
 }
 resource "aws_subnet" "outside_subnet" {
@@ -23,7 +23,7 @@ resource "aws_subnet" "outside_subnet" {
   cidr_block        = var.outside_subnet
   availability_zone = var.aws_az
   tags = {
-    Name = "${var.env_name}-outside"
+    Name = "${local.env_name}-outside"
   }
 }
 resource "aws_subnet" "inside_subnet" {
@@ -31,14 +31,14 @@ resource "aws_subnet" "inside_subnet" {
   cidr_block        = var.inside_subnet
   availability_zone = var.aws_az
   tags = {
-    Name = "${var.env_name}-inside"
+    Name = "${local.env_name}-inside"
   }
 }
 # Service Mgmt Internet Gateway
 resource "aws_internet_gateway" "mgmt_igw" {
   vpc_id = aws_vpc.service_vpc.id
   tags = {
-    Name = "${var.env_name}-mgmt-igw"
+    Name = "${local.env_name}-mgmt-igw"
   }
 }
 
@@ -46,7 +46,7 @@ resource "aws_internet_gateway" "mgmt_igw" {
 resource "aws_route_table" "mgmt_route_table" {
   vpc_id = aws_vpc.service_vpc.id
   tags = {
-    Name = "${var.env_name}-mgmt-rt"
+    Name = "${local.env_name}-mgmt-rt"
   }
 }
 
@@ -72,7 +72,7 @@ resource "aws_vpc" "app_vpc" {
   enable_dns_hostnames = true
   instance_tenancy     = "default"
   tags = {
-    Name = "${var.env_name}-app-vpc"
+    Name = "${local.env_name}-app-vpc"
   }
 }
 
@@ -82,7 +82,7 @@ resource "aws_subnet" "gwlbe_subnet" {
   cidr_block        = var.gwlbe_subnet
   availability_zone = var.aws_az
   tags = {
-    Name = "${var.env_name}-gwlbe-subnet"
+    Name = "${local.env_name}-gwlbe-subnet"
   }
 }
 resource "aws_subnet" "app_subnet" {
@@ -90,7 +90,7 @@ resource "aws_subnet" "app_subnet" {
   cidr_block        = var.app_subnet
   availability_zone = var.aws_az
   tags = {
-    Name = "${var.env_name}-app-subnet"
+    Name = "${local.env_name}-app-subnet"
   }
 }
 
@@ -98,7 +98,7 @@ resource "aws_subnet" "app_subnet" {
 resource "aws_internet_gateway" "app_igw" {
   vpc_id = aws_vpc.app_vpc.id
   tags = {
-    Name = "${var.env_name}-app-igw"
+    Name = "${local.env_name}-app-igw"
   }
 }
 
@@ -125,7 +125,7 @@ resource "aws_security_group" "allow_all" {
   }
 
   tags = {
-    Name = "${var.env_name}-service-sg"
+    Name = "${local.env_name}-service-sg"
     app  = "service"
   }
 }
@@ -151,7 +151,7 @@ resource "aws_security_group" "app_allow_all" {
   }
 
   tags = {
-    Name = "${var.env_name}-app-sg"
+    Name = "${local.env_name}-app-sg"
     app  = "service"
   }
 }

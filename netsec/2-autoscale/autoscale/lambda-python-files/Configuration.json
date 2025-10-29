@@ -3,39 +3,39 @@
     "fmcIpforDeviceReg": "DONTRESOLVE",
     "RegistrationId": "cisco",
     "NatId": "cisco",
-    "fmcAccessPolicyName": "DevNetBG-Ignite-Access-Policy",
-    "fmcPlatformPolicyName": "DevNetBG-Platform-Policy",
-    "fmcInsideNicName": "DevNetBG-Ignite-Inside",
-    "fmcOutsideNicName": "DevNetBG-Ignite-Outside",
+    "fmcAccessPolicyName": "DevNet-Ignite-Access-Policy",
+    "fmcPlatformPolicyName": "DevNet-Ignite-Platform-Policy",
+    "fmcInsideNicName": "DevNet-Ignite-Inside",
+    "fmcOutsideNicName": "DevNet-Ignite-Outside",
     "fmcInsideNic": "TenGigabitEthernet0/0",
     "fmcOutsideNic": "TenGigabitEthernet0/1",
-    "fmcInsideZone": "DevNetBG-Ignite-Inside-sz",
-    "fmcOutsideZone": "DevNetBG-Ignite-Outside-sz",
+    "fmcInsideZone": "DevNet-Ignite-Inside-sz",
+    "fmcOutsideZone": "DevNet-Ignite-Outside-sz",
     "interfaceConfig": [
       {
-        "ifname": "DevNetBG-Ignite-Inside",
+        "ifname": "DevNet-Ignite-Inside",
         "name": "TenGigabitEthernet0/0",
         "managementOnly": "false",
         "MTU": "1806",
         "mode": "NONE",
         "securityZone": {
-          "name": "Inside-sz"
+          "name": "DevNet-Ignite-Inside-sz"
         }
       },
       {
-        "ifname": "DevNetBG-Ignite-Outside",
+        "ifname": "DevNet-Ignite-Outside",
         "name": "TenGigabitEthernet0/1",
         "managementOnly": "false",
         "MTU": "1806",
         "mode": "NONE", 
         "securityZone": {
-          "name": "Outside-sz"
+          "name": "DevNet-Ignite-Outside-sz"
         }
       }
     ],
     "SingleArmTrafficRoutes": [
       {
-        "interface": "DevNetBG-Ignite-Inside",
+        "interface": "DevNet-Ignite-Inside",
         "network": "any-ipv4",
         "gateway": "",
         "metric": "1"

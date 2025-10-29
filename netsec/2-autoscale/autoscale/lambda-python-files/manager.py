@@ -803,7 +803,7 @@ def execute_instance_tg_health_doctor(fmc):
         logger.info("NGFWv instances: " + str(killable_ftd_instance) + " found unhealthy for more than threshold!")   
         list_len = len(killable_ftd_instance)
         if list_len > 0:
-            unhealthy_instance_name = asg_name + '-' + unhealthy_instance_id 
+            ec2_unhealthy_instance = EC2Instance(unhealthy_instance_id, '')
             ec2_group = AutoScaleGroup(e_var['AutoScaleGrpName'])
             for i in range(0, list_len):
                 # Delete instance from Autoscale Group
@@ -817,9 +817,9 @@ def execute_instance_tg_health_doctor(fmc):
                 # Deregister instance from FMC    
                 logger.info('Deregistering device %s from FMC' % unhealthy_instance_id)
                 if fmc.is_cdfmc:
-                    r = fmc.deregister_device_scc(unhealthy_instance_name)
+                    r = fmc.deregister_device_scc(ec2_unhealthy_instance.vm_name)
                 else:
-                    r = fmc.deregister_device(unhealthy_instance_name)
+                    r = fmc.deregister_device(ec2_unhealthy_instance.vm_name)
                 logger.info(r)
                       
     except Exception as e:

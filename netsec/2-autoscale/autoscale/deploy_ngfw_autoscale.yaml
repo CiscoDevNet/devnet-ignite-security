@@ -37,6 +37,7 @@ Parameters:
     Description: >-
       Email address to which AutoScale Events Email needs to be sent.
     Type: String
+    Default: ''
   VpcId:
     Description: >-
       Select vpc for AutoScale group
@@ -580,7 +581,7 @@ Resources:
     Type: AWS::Lambda::LayerVersion
     Properties:
       CompatibleRuntimes:
-        - python3.11
+        - python3.10
       Content:
         S3Bucket: !Ref S3BktName
         S3Key: autoscale_layer.zip
@@ -708,7 +709,7 @@ Resources:
    Properties:
      FunctionName: !Join ['-', [!Ref AutoscaleGrpNamePrefix, !Ref PodNumber, 'manager-lambda'] ]
      Handler: manager.lambda_handler
-     Runtime: python3.11
+     Runtime: python3.10
      ReservedConcurrentExecutions: 1
      CodeUri:
        Bucket: !Ref S3BktName
@@ -826,7 +827,7 @@ Resources:
     Properties:
       FunctionName: !Join ['-', [!Ref AutoscaleGrpNamePrefix, !Ref PodNumber, 'lifecycle-lambda'] ]
       Handler: lifecycle_ftdv.lambda_handler
-      Runtime: python3.11
+      Runtime: python3.10
       CodeUri:
         Bucket: !Ref S3BktName
         Key: lifecycle_ftdv.zip
@@ -919,7 +920,7 @@ Resources:
     Properties:
       FunctionName: !Join ['-', [!Ref AutoscaleGrpNamePrefix, !Ref PodNumber, 'publish-custom-metrics'] ]
       Handler: custom_metric_fmc.lambda_handler
-      Runtime: python3.11
+      Runtime: python3.10
       CodeUri:
         Bucket: !Ref S3BktName
         Key: custom_metric_fmc.zip
@@ -1062,11 +1063,11 @@ Resources:
         - !Ref ScaleOutCPUpolicy
       AlarmDescription: Alarm when CPU usage hits upper threshold
       ComparisonOperator: GreaterThanThreshold
-      DatapointsToAlarm: 5
+      DatapointsToAlarm: 2
       Dimensions:
         - Name: AutoScalingGroupName
           Value: !Ref FTDvGroup
-      EvaluationPeriods: 5
+      EvaluationPeriods: 2
       MetricName: CPUUtilization
       Threshold: !Select ['1', !Ref CpuThresholds ]
       Period: 60
@@ -1086,11 +1087,11 @@ Resources:
         - !Ref ScaleInCPUpolicy
       AlarmDescription: Alarm when CPU usage hits lower threshold
       ComparisonOperator: LessThanThreshold
-      DatapointsToAlarm: 10
+      DatapointsToAlarm: 2
       Dimensions:
         - Name: AutoScalingGroupName
           Value: !Ref FTDvGroup
-      EvaluationPeriods: 10
+      EvaluationPeriods: 2
       MetricName: CPUUtilization
       Threshold: !Select ['0', !Ref CpuThresholds ]
       Period: 60

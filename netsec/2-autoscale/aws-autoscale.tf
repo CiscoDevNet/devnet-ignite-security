@@ -22,13 +22,16 @@ resource "aws_cloudformation_stack" "autoscale_cf_stack" {
     KeyPairName: aws_key_pair.public_key.key_name
     fmcServer: "api.us.security.cisco.com"
     fmcOperationsApiToken: var.sccfm_api_token
-    fmcDeviceGrpName: var.ftd_device_group
+    fmcDeviceGrpName: local.ftd_device_group
     fmcPerformanceLicenseTier: "FTDv30"
     fmcMetricsUsername: ""
     fmcMetricsPassword: ""
     ngfwPassword: random_password.ftd_pass.result
-    NotifyEmailID: "brandgor@cisco.com"
     S3BktName: "devnetlambda"
+  }
+
+  timeouts {
+    delete = "5m"
   }
 }
 

@@ -1,11 +1,10 @@
 {
     "type": "DeviceGroup",
-    "name": "DevNet-AutoScale",
-    "id": "6d18e3bc-97f0-11f0-85f2-33cb6f4005d5",
+    "name": "GROUPNAME",
     "members": [
         {
             "type": "Device",
-            "id": "e1a74fa4-aed7-11f0-881e-a621fd53b9b8"
+            "id": "DEVICEID"
         }
     ]
 }

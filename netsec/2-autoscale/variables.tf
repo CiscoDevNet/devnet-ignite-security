@@ -99,11 +99,6 @@ variable "ftdv_mgmt_private_ip" {
   default       = "0.0.0.0"
 }
 
-variable "ftd_device_group" {
-  type          = string
-  default       = "DevNet-AutoScale"
-}
-
 # API Key for cdFMC and SCC
 variable "sccfm_api_token" {
   type          = string 

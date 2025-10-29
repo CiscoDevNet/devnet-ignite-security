@@ -183,9 +183,10 @@ resource "fmc_device_vtep_policy" "vtep" {
 }
 
 resource "fmc_device_vni_interface" "vni_int" {
+    depends_on              = [fmc_device_vtep_policy.vtep]
     device_id               = data.fmc_device.ftd1.id
     vni_id                  = 1
-    nve_number              = fmc_device_vtep_policy.vtep.vteps[0].nve_number
+    nve_number              = 1
     logical_name            = "vni1"
     enable_proxy            = true
     security_zone_id        = fmc_security_zone.inside_sz.id
@@ -200,14 +201,14 @@ resource "fmc_device_ipv4_static_route" "inside_static_route" {
         id = "cb7116e8-66a6-480b-8f9b-295191a0940a" # any ipv4
       }
     ]
-    metric_value         = 1
+    metric_value         = 10
     gateway_host_literal = aws_network_interface.ftd_inside.private_ip
 }
 
 # Configure platform policy
 
 resource "fmc_ftd_platform_settings" "platform_settings" {
-    name        = "${local.env_name}-platform-settings"
+    name        = "${local.env_name}-Platform-Policy"
     description = "${local.env_name} platform settings"
 }
 

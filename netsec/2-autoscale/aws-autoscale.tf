@@ -30,8 +30,5 @@ resource "aws_cloudformation_stack" "autoscale_cf_stack" {
     S3BktName: "devnetlambda"
   }
 
-  timeouts {
-    delete = "5m"
-  }
 }
 

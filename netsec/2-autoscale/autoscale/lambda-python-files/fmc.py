@@ -965,11 +965,14 @@ class FirepowerManagementCenter:
         Returns:    REST delete response
         Raises:
         """
-        api_path = "/firewall/v1/inventory/devices/"
+        #api_path = "/firewall/v1/inventory/devices/"
         dev_id = self.get_device_id_by_name_scc(name)
         logger.info("De-registering: " + name + " uid: " + dev_id)
-        url = self.scc_server + api_path + dev_id
-        r = self.rest_delete(url)
+        #url = self.scc_server + api_path + dev_id
+        #r = self.rest_delete(url)
+        api_path = f"/firewall/v1/inventory/devices/ftds/cdfmcManaged/{dev_id}/delete"
+        url = self.scc_server + api_path
+        r = self.rest_post(url, "")
         return r
 
     def get_device_id_by_name_scc(self, name):
@@ -1189,6 +1192,9 @@ class FirepowerManagementCenter:
                             }
                             
             r = self.rest_post(url, post_data)  
+            if 'error' in r.json() and 'already has some assignments' in r.json()['error']['messages'][0]['description']:
+                url = self.server + api_path + '/' + policy_id
+                r = self.rest_put(url, post_data)
             return r  
         except Exception as e:
             logger.exception(e)

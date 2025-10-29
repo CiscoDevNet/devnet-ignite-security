@@ -1,0 +1,17 @@
+{
+    "type": "PolicyAssignment",
+    "policy": {
+        "type": "AccessPolicy",
+        "id": "ACCESSID"
+    },
+    "targets": [
+        {
+            "type": "Device",
+            "id": "DEVICEID"
+        },
+        {
+            "id": "GROUPID",
+            "type": "DeviceGroup"
+        }
+    ]
+}

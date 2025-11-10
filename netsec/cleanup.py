@@ -1,3 +1,4 @@
+#!/bin/python3
 import sys
 import os
 import json
@@ -12,19 +13,23 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 VERBOSE = 0
 SCC_API = 'api.us.security.cisco.com'
 ITERATION_COUNT = 10
+DEFAULT_REGIONS = [
+    'us-east-1',
+    'us-east-2',
+    'us-west-1',
+    'us-west-2'
+]
+DEFAULT_TAG = 'DevNet-Ignite'
+DEFAULT_AUTOSCALE_TAG = 'NGFWv-AutoScale'
 
-region = 'us-east-1'
-pod = '123'
-tag_match = f'DevNet-Ignite-{pod}'
-    
+
 def print_all(item):
     if VERBOSE:
-        pprint(item) 
+        pprint(item)
 
 class AwsPod:
 
     def __init__(self, region, tag_name, pod_number, delete=False):
-        api_token = os.getenv('FMC_TOKEN')
         if os.getenv('AWS_ACCESS_KEY_ID') is None or os.getenv('AWS_SECRET_ACCESS_KEY') is None:
             print("AWS init Error: please provide AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY for AWS as env variables")
             exit(1)
@@ -33,10 +38,11 @@ class AwsPod:
         self.pod_number = pod_number
         self.delete = delete
         self.tag_match = f'{tag_name}-{pod_number}'
+        self.autoscale_tag_match = f"{DEFAULT_AUTOSCALE_TAG}-{pod_number}"
         self.ec2_client = boto3.client('ec2', region_name = region)
         self.elbv2_client = boto3.client('elbv2', region_name = region)
         self.cf_client = boto3.client('cloudformation', region_name=region)
-
+        self.fail_count = 0
 
         self.name_filter = [
             {
@@ -47,7 +53,23 @@ class AwsPod:
             },
         ]
 
+    @classmethod
+    def get_pods(cls, tag=DEFAULT_TAG, regions=DEFAULT_REGIONS):
+        if os.getenv('AWS_ACCESS_KEY_ID') is None or os.getenv('AWS_SECRET_ACCESS_KEY') is None:
+            print("AWS init Error: please provide AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY for AWS as env variables")
+            exit(1)
+        pods = []
+        for region in regions:
+            client = boto3.client('ec2', region_name = region)
+            vpcs = client.describe_vpcs(Filters=[{'Name': 'tag:Name', 'Values': [f'{tag}*']}])
+            for vpc in vpcs['Vpcs']:
+                vpc_name = cls.get_name_values(vpc, tag)
+                print(f"Found VPC: {vpc_name} in region: {region}")
+                pods.append({"region": region, "pod_number": vpc_name.split('-')[2]})
+        return pods
+
     def run_all(self):
+        self.fail_count = 0
         try:
             self.del_instances()
             self.del_interfaces()
@@ -56,52 +78,73 @@ class AwsPod:
             self.del_load_balancers()
             self.del_eips()
             self.del_vpcs()
+            self.del_s3()
             self.del_key_pair()
+            return self.fail_count
         except boto3.exceptions.Boto3Error as e:
             print(e)
             exit(1)
-        
 
-    def get_name_values(self, tag_dict, value):
+
+    @classmethod
+    def get_name_values(cls, tag_dict, value):
         return ','.join([i['Value'] for i in tag_dict['Tags'] if i['Key'] == 'Name' and value in i['Value']])
-    
+
     def del_vpcs(self):
         client = self.ec2_client
         vpcs = client.describe_vpcs(Filters=self.name_filter)
         print_all(vpcs)
         for vpc in vpcs['Vpcs']:
-            vpc_id = vpc['VpcId'] 
+            vpc_id = vpc['VpcId']
             print("VPC Id: " + vpc_id + " Name: " + self.get_name_values(vpc, self.tag_match))
 
-            nat_gateways = client.describe_nat_gateways(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
-            for nat_gw in nat_gateways['NatGateways']:
-                print(f"    NAT Gateway: {nat_gw['NatGatewayId']}")
-                if self.delete:
-                    client.delete_nat_gateway(NatGatewayId=nat_gw['NatGatewayId'])
-                    waiter = client.get_waiter('nat_gateway_deleted')
-                    waiter.wait(NatGatewayIds=[nat_gw['NatGatewayId']])
-
-            eips = client.describe_addresses()
-            for eip in eips['Addresses']:
-                if 'VpcId' in eip and eip['VpcId'] == vpc_id:
-                    allocation_id = eip['AllocationId']
-                    print(f"    EIPs: Public IP {eip['PublicIp']} Allocation ID {allocation_id}")
+            try:
+                nat_gateways = client.describe_nat_gateways(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
+                for nat_gw in nat_gateways['NatGateways']:
+                    print(f"    NAT Gateway: {nat_gw['NatGatewayId']}")
                     if self.delete:
-                        client.release_address(AllocationId=allocation_id)
+                        client.delete_nat_gateway(NatGatewayId=nat_gw['NatGatewayId'])
+                        print(f"    NAT Gateway deletion initated...")
+                        waiter = client.get_waiter('nat_gateway_deleted')
+                        waiter.wait(NatGatewayIds=[nat_gw['NatGatewayId']])
+                        print(f"    NAT Gateway deletion finished...")
+            except Exception as e:
+                print(f"Error deleting NAT gateway: {e}")
+                self.fail_count += 1
 
-            internet_gateways = client.describe_internet_gateways(Filters=[{'Name': 'attachment.vpc-id', 'Values': [vpc_id]}])
-            for igw in internet_gateways['InternetGateways']:
-                print(f"    Internet Gateway: {igw['InternetGatewayId']}")
-                if self.delete:
-                    client.detach_internet_gateway(InternetGatewayId=igw['InternetGatewayId'], VpcId=vpc_id)
-                    client.delete_internet_gateway(InternetGatewayId=igw['InternetGatewayId'])
+            try:
+                eips = client.describe_addresses()
+                for eip in eips['Addresses']:
+                    if 'VpcId' in eip and eip['VpcId'] == vpc_id:
+                        allocation_id = eip['AllocationId']
+                        print(f"    EIPs: Public IP {eip['PublicIp']} Allocation ID {allocation_id}")
+                        if self.delete:
+                            client.release_address(AllocationId=allocation_id)
+            except Exception as e:
+                print(f"Error deleting EIP: {e}")
+                self.fail_count += 1
 
-            endpoints = client.describe_vpc_endpoints(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
-            for ep in endpoints['VpcEndpoints']:
-                print(f"    VPC endpoint: {ep['VpcEndpointId']}")
-                if self.delete:
-                    client.delete_vpc_endpoints(VpcEndpointIds=[ep['VpcEndpointId']])
-            
+            try:
+                internet_gateways = client.describe_internet_gateways(Filters=[{'Name': 'attachment.vpc-id', 'Values': [vpc_id]}])
+                for igw in internet_gateways['InternetGateways']:
+                    print(f"    Internet Gateway: {igw['InternetGatewayId']}")
+                    if self.delete:
+                        client.detach_internet_gateway(InternetGatewayId=igw['InternetGatewayId'], VpcId=vpc_id)
+                        client.delete_internet_gateway(InternetGatewayId=igw['InternetGatewayId'])
+            except Exception as e:
+                print(f"Error deleting igw: {e}")
+                self.fail_count += 1
+
+            try:
+                endpoints = client.describe_vpc_endpoints(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
+                for ep in endpoints['VpcEndpoints']:
+                    print(f"    VPC endpoint: {ep['VpcEndpointId']}")
+                    if self.delete:
+                        client.delete_vpc_endpoints(VpcEndpointIds=[ep['VpcEndpointId']])
+            except Exception as e:
+                print(f"Error deleting vpc endpoint: {e}")
+                self.fail_count += 1
+
             try:
                 subnets = client.describe_subnets(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
                 for subnet in subnets['Subnets']:
@@ -110,6 +153,7 @@ class AwsPod:
                         client.delete_subnet(SubnetId=subnet['SubnetId'])
             except Exception as e:
                 print(f"Error deleting subnet: {e}")
+                self.fail_count += 1
 
             try:
                 security_groups = client.describe_security_groups(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
@@ -120,6 +164,7 @@ class AwsPod:
                             client.delete_security_group(GroupId=sg['GroupId'])
             except Exception as e:
                 print(f"Error deleting security group: {e}")
+                self.fail_count += 1
 
             try:
                 route_tables = client.describe_route_tables(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
@@ -134,7 +179,8 @@ class AwsPod:
                         if self.delete:
                             client.delete_route_table(RouteTableId=rt['RouteTableId'])
             except Exception as e:
-                print(f"Error deleting security group: {e}")
+                print(f"Error deleting route table: {e}")
+                self.fail_count += 1
 
             try:
                 network_acls = client.describe_network_acls(Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
@@ -144,12 +190,14 @@ class AwsPod:
                         if self.delete:
                             client.delete_network_acl(NetworkAclId=nacl['NetworkAclId'])
             except Exception as e:
-                print(f"Error deleting security group: {e}")
+                print(f"Error deleting acl: {e}")
+                self.fail_count += 1
             if self.delete:
                 try:
                     client.delete_vpc(VpcId=vpc_id)
                 except Exception as e:
-                    print(f"Error deleting security group: {e}")
+                    print(f"Error deleting VPC: {e}")
+                    self.fail_count += 1
 
     def del_eips(self):
         client = self.ec2_client
@@ -165,7 +213,8 @@ class AwsPod:
                                 print(f"  Error deleting EIP {item.get('ResourceId')}: {item.get('Error', {}).get('Message')}")
                     except Exception as e:
                         print(f"Error deleting EIP {eip['PublicIp']}: {e}")
-    
+                        self.fail_count += 1
+
     def del_load_balancers(self):
         client = self.elbv2_client
         response = client.describe_load_balancers()
@@ -175,7 +224,7 @@ class AwsPod:
             tags_response = client.describe_tags(ResourceArns=[lb_arn])
             for tag_desc in tags_response['TagDescriptions']:
                 for tag in tag_desc['Tags']:
-                    if tag['Key'] == 'Name' and tag_match in tag['Value']:
+                    if tag['Key'] == 'Name' and self.tag_match in tag['Value']:
                         lb_list.append(lb)
         for lb in lb_list:
             try:
@@ -202,7 +251,8 @@ class AwsPod:
                     print(f"Loadbalancer {lb_arn} deleted successfully.")
             except Exception as e:
                 print(f"Error deleting Loadbalancer: {e}")
-    
+                self.fail_count += 1
+
     def del_gateway_lb_resources(self):
         client = self.ec2_client
 
@@ -229,6 +279,7 @@ class AwsPod:
                             return
         except Exception as e:
             print(f"An error occurred deleting vpc service route table: {e}")
+            self.fail_count += 1
 
         response = client.describe_vpc_endpoints(
             Filters=[
@@ -251,6 +302,7 @@ class AwsPod:
                         print("Deleted GWLB Endpoint")
             except Exception as e:
                 print(f"Error deleting endpoint: {e}")
+                self.fail_count += 1
 
         response = client.describe_vpc_endpoint_services(
             Filters=[
@@ -272,6 +324,7 @@ class AwsPod:
                             print(f"Failed to reject some endpoint connections:")
                             for entry in unsuccessful:
                                 print(f"  Endpoint ID: {entry.get('ResourceId')}, {entry.get('Error', {}).get('Message')}")
+                            self.fail_count += 1
                         else:
                             print(f"Successfully rejected endpoint connections for service {service['ServiceId']}.")
                     response = client.delete_vpc_endpoint_service_configurations(ServiceIds=[service['ServiceId']])
@@ -280,21 +333,27 @@ class AwsPod:
                         print("Deletion was unsuccessful for some services:")
                         for item in response['Unsuccessful']:
                             print(f"  Error deleting {item.get('ResourceId')}: {item.get('Error', {}).get('Message')}")
+                        self.fail_count += 1
                 except Exception as e:
                     print(f"Error deleting endpoint service {service['ServiceId']}: {e}")
+                    self.fail_count += 1
 
         client = self.elbv2_client
-        response = client.describe_target_groups()
-        for tg in response['TargetGroups']:
-            tg_arn = tg['TargetGroupArn']
-            tags_response = client.describe_tags(ResourceArns=[tg_arn])
-            for tag_desc in tags_response['TagDescriptions']:
-                for tag in tag_desc['Tags']:
-                    if tag['Key'] == 'Name' and tag_match in tag['Value']:
-                        print(f"Target Group: {tg['TargetGroupName']} (ARN: {tg['TargetGroupArn']})")
-                        if self.delete:
-                            client.delete_target_group(TargetGroupArn=tg['TargetGroupArn'])
-                            print(f"Target Group {tg_arn} deleted successfully.")
+        try:
+            response = client.describe_target_groups()
+            for tg in response['TargetGroups']:
+                tg_arn = tg['TargetGroupArn']
+                tags_response = client.describe_tags(ResourceArns=[tg_arn])
+                for tag_desc in tags_response['TagDescriptions']:
+                    for tag in tag_desc['Tags']:
+                        if tag['Key'] == 'Name' and self.tag_match in tag['Value']:
+                            print(f"Target Group: {tg['TargetGroupName']} (ARN: {tg['TargetGroupArn']})")
+                            if self.delete:
+                                client.delete_target_group(TargetGroupArn=tg['TargetGroupArn'])
+                                print(f"Target Group {tg_arn} deleted successfully.")
+        except Exception as e:
+            print(f"Error deleting Loadbalancer: {e}")
+            self.fail_count += 1
 
     def del_instances(self):
         client = self.ec2_client
@@ -302,13 +361,12 @@ class AwsPod:
             Filters=[
                 {
                     'Name': 'tag:Name',
-                    'Values': [f'{self.tag_match}*']
+                    'Values': [f'{self.tag_match}*', f'{self.autoscale_tag_match}*']
                 }
             ]
         )
         for reservation in response['Reservations']:
             for instance in reservation['Instances']:
-
                 if self.delete:
                     client.terminate_instances(InstanceIds=[instance['InstanceId']])
 
@@ -331,7 +389,7 @@ class AwsPod:
                     client.detach_network_interface(
                         AttachmentId=attachment_id,
                     )
-                    time.sleep(5) 
+                    time.sleep(5)
             try:
                 if self.delete:
                     client.delete_network_interface(NetworkInterfaceId=eni_id)
@@ -342,42 +400,90 @@ class AwsPod:
                     print(f"Network Interface {eni_id} is still in use and cannot be deleted yet. It might be associated with a terminating instance.")
                 else:
                     print(f"Error deleting Network Interface {eni_id}: {e}")
+                self.fail_count += 1
 
     def del_key_pair(self):
         client = self.ec2_client
         response = client.describe_key_pairs()
         for key_pair in response['KeyPairs']:
-            tags = key_pair.get('Tags', [])
-            for tag in tags:
-                if tag['Key'] == 'Name' and self.tag_match in tag['Value']:
-                    print(f"Key pair: {key_pair['KeyName']}")
-                    if self.delete:
-                        client.delete_key_pair(KeyName=key_pair['KeyName'])
+            if self.tag_match in key_pair['KeyName']:
+                print(f"Key pair: {key_pair['KeyName']}")
+                if self.delete:
+                    client.delete_key_pair(KeyName=key_pair['KeyName'])
+                    print(f"Key pair deleted: {key_pair['KeyName']}")
+
+    def del_s3(self):
+        s3_client = boto3.client('s3')
+        bucket_name = f"{self.tag_match}-s3".lower()
+        try:
+            s3_client.head_bucket(Bucket=bucket_name)
+        except s3_client.exceptions.ClientError as e:
+            error_code = int(e.response['Error']['Code'])
+            if error_code == 404:
+                return False
+            elif error_code == 403:
+                print(f"Access to bucket '{bucket_name}' is forbidden.")
+                return False
+            else:
+                print(f"An unexpected error occurred: {e}")
+                raise
+
+        print(f"Found bucket {bucket_name}")
+        if not self.delete:
+            return
+        # Delete all objects in the bucket
+        paginator = s3_client.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=bucket_name)
+        for page in pages:
+            if 'Contents' in page:
+                objects_to_delete = [{'Key': obj['Key']} for obj in page['Contents']]
+                s3_client.delete_objects(Bucket=bucket_name, Delete={'Objects': objects_to_delete})
+
+        # If versioning is enabled, delete all object versions and delete markers
+        paginator_versions = s3_client.get_paginator('list_object_versions')
+        pages_versions = paginator_versions.paginate(Bucket=bucket_name)
+        for page_version in pages_versions:
+            objects_to_delete_versions = []
+            if 'Versions' in page_version:
+                for obj_version in page_version['Versions']:
+                    objects_to_delete_versions.append({'Key': obj_version['Key'], 'VersionId': obj_version['VersionId']})
+            if 'DeleteMarkers' in page_version:
+                for delete_marker in page_version['DeleteMarkers']:
+                    objects_to_delete_versions.append({'Key': delete_marker['Key'], 'VersionId': delete_marker['VersionId']})
+
+            if objects_to_delete_versions:
+                s3_client.delete_objects(Bucket=bucket_name, Delete={'Objects': objects_to_delete_versions})
+        s3_client.delete_bucket(Bucket=bucket_name)
+        print(f"Bucket '{bucket_name}' deleted successfully.")
 
     def del_cloudformation_stack(self):
         client = self.cf_client
         response = client.list_stacks()
         for stack in response['StackSummaries']:
-            if stack['StackStatus'] in ['DELETE_COMPLETE', 'DELETE_IN_PROGRESS']:
+            if stack['StackStatus'] == 'DELETE_COMPLETE':
                 continue
             if self.tag_match in stack['StackName']:
                 print(f"Stack: {stack['StackName']}")
                 if self.delete:
-                    client.delete_stack(StackName=stack['StackName'])
+                    if stack['StackStatus'] == 'DELETE_IN_PROGRESS':
+                        print(f"Stack deletion in progress for {stack['StackName']}...")
+                    else:
+                        client.delete_stack(StackName=stack['StackName'])
+                        print(f"Stack deletion initiated for {stack['StackName']}...")
             else:
-                return
-            
+                continue
+
             if not self.delete:
                 continue
-            print(f"Stack deletion initiated for {stack['StackName']}. Waiting for completion...")
-            
+
             try:
                 waiter = client.get_waiter('stack_delete_complete')
-                waiter.config.max_attempts = 2
+                waiter.config.max_attempts = 3
                 waiter.wait(StackName=stack['StackName'])
                 print(f"CloudFormation stack '{stack['StackName']}' deleted successfully.")
             except Exception as e:
                 print(f"CloudFormation stack '{stack['StackName']}' still being deleted... moving on...")
+                self.fail_count += 1
 
     def del_elastic_ips(self):
         client = self.ec2_client
@@ -396,21 +502,39 @@ class AwsPod:
 
 class SccPod:
 
+    api_token = os.getenv('FMC_TOKEN')
+    scc_server = f"https://{SCC_API}"
+    server = scc_server + '/firewall/v1/cdfmc'
+    headers = {'Authorization': f"Bearer {api_token}", 'Content-Type': 'application/json'}
+
     def __init__(self, tag_name, pod_number, delete=False):
-        api_token = os.getenv('FMC_TOKEN')
-        if api_token is None:
+        if self.api_token is None:
             print("SCC init Error: please provide api_token for SCC in env variable FMC_TOKEN")
             exit(1)
-        self.scc_server = f"https://{SCC_API}"
-        self.server = self.scc_server + '/firewall/v1/cdfmc'
-        self.api_token = api_token
-        self.headers = {'Authorization': f"Bearer {self.api_token}", 'Content-Type': 'application/json'}
         self.tag_match = f'{tag_name}-{pod_number}'
+        self.autoscale_tag_match = f"{DEFAULT_AUTOSCALE_TAG}-{pod_number}"
         self.delete = delete
 
-    def rest_get(self, url):
+    @classmethod
+    def get_pods(cls, tag_match=DEFAULT_TAG):
+        if cls.api_token is None:
+            print("SCC init Error: please provide api_token for SCC in env variable FMC_TOKEN")
+
+        api_path = "/firewall/v1/inventory/devices"
+        url = f"{cls.scc_server}{api_path}"
+        r = cls.rest_get(url)
+        pods = []
+        if r and 'items' in r.json():
+            for item in r.json()['items']:
+                if tag_match in item['name']:
+                    print(f"Found Device: {item['name']}")
+                    pods.append(item['name'].split('-')[2])
+        return pods
+
+    @classmethod
+    def rest_get(cls, url):
         try:
-            r = requests.get(url, headers=self.headers, verify=False)
+            r = requests.get(url, headers=cls.headers, verify=False)
             status_code = r.status_code
             if not (200 <= status_code <= 300):
                 r.raise_for_status()
@@ -421,9 +545,10 @@ class SccPod:
             if r: r.close()
             return r
 
-    def rest_post(self, url, post_data):
+    @classmethod
+    def rest_post(cls, url, post_data):
         try:
-            r = requests.post(url, data=json.dumps(post_data), headers=self.headers, verify=False)
+            r = requests.post(url, data=json.dumps(post_data), headers=cls.headers, verify=False)
             status_code = r.status_code
             if not (201 <= status_code <= 202):
                 print("Error occurred in POST --> "+r.json())
@@ -433,9 +558,10 @@ class SccPod:
             if r: r.close()
             return r
 
-    def rest_delete(self, url):
+    @classmethod
+    def rest_delete(cls, url):
         try:
-            r = requests.delete(url, headers=self.headers, verify=False)
+            r = requests.delete(url, headers=cls.headers, verify=False)
             status_code = r.status_code
             if 200 <= status_code <= 300:
                 r.raise_for_status()
@@ -457,6 +583,7 @@ class SccPod:
                     if self.delete:
                         url = f"{self.server}{api_path}/{item['id']}"
                         self.rest_delete(url)
+                        print(f"Deleted AC policy {item['name']}")
 
     def del_platform_policy(self):
         api_path = "/api/fmc_config/v1/domain/e276abec-e0f2-11e3-8169-6d9ed49b625f/policy/ftdplatformsettingspolicies"
@@ -469,6 +596,7 @@ class SccPod:
                     if self.delete:
                         url = f"{self.server}{api_path}/{item['id']}"
                         self.rest_delete(url)
+                        print(f"Deleted Platform policy {item['name']}")
 
     def del_intrusion_policy(self):
         api_path = "/api/fmc_config/v1/domain/e276abec-e0f2-11e3-8169-6d9ed49b625f/policy/intrusionpolicies"
@@ -481,6 +609,7 @@ class SccPod:
                     if self.delete:
                         url = f"{self.server}{api_path}/{item['id']}"
                         self.rest_delete(url)
+                        print(f"Deleted Intrusion policy {item['name']}")
 
     def del_objects(self):
         api_path = "/api/fmc_config/v1/domain/e276abec-e0f2-11e3-8169-6d9ed49b625f/object/hosts"
@@ -493,6 +622,7 @@ class SccPod:
                     if self.delete:
                         url = f"{self.server}{api_path}/{item['id']}"
                         self.rest_delete(url)
+                        print(f"Deleted Host Object {item['name']}")
 
         api_path = "/api/fmc_config/v1/domain/e276abec-e0f2-11e3-8169-6d9ed49b625f/object/networks"
         url = f"{self.server}{api_path}"
@@ -504,6 +634,7 @@ class SccPod:
                     if self.delete:
                         url = f"{self.server}{api_path}/{item['id']}"
                         self.rest_delete(url)
+                        print(f"Deleted Network Object {item['name']}")
 
         api_path = "/api/fmc_config/v1/domain/e276abec-e0f2-11e3-8169-6d9ed49b625f/object/securityzones"
         url = f"{self.server}{api_path}"
@@ -515,6 +646,7 @@ class SccPod:
                     if self.delete:
                         url = f"{self.server}{api_path}/{item['id']}"
                         self.rest_delete(url)
+                        print(f"Deleted Security Zone {item['name']}")
 
     def del_devices(self):
         api_path = "/firewall/v1/inventory/devices"
@@ -522,12 +654,14 @@ class SccPod:
         r = self.rest_get(url)
         if 'items' in r.json():
             for item in r.json()['items']:
-                if self.tag_match in item['name']:
+                if self.tag_match in item['name'] or self.autoscale_tag_match in item['name']:
                     print(f"Found device {item['name']} {item['uid']}")
                     if self.delete:
                         api_path = f"/firewall/v1/inventory/devices/ftds/cdfmcManaged/{item['uid']}/delete"
                         url = f"{self.scc_server}{api_path}"
                         r = self.rest_post(url, "")
+                        print(f"Deleted device {item['name']}")
+
     def run_all(self):
         self.del_devices()
         self.del_ac_policy()
@@ -535,31 +669,71 @@ class SccPod:
         self.del_platform_policy()
         self.del_objects()
 
+def cleanup_pod(pod_number, delete):
+    for i in range(1, ITERATION_COUNT + 1):
+        if delete:
+            print(f"\n** Pod {pod_number} cleanup - attempt number {i}/{ITERATION_COUNT} **\n")
+        scc = SccPod('DevNet-Ignite', pod_number, delete=delete)
+        scc.run_all()
+        pod = AwsPod('us-east-1', 'DevNet-Ignite', pod_number, delete=delete)
+        pod.run_all()
+        if delete:
+            if pod.fail_count > 0:
+                print("Cleanup not complete...")
+            else:
+                print("Cleanup complete! Exiting")
+                break
+        else:
+            break
+
+def get_pods():
+    scc_pods = SccPod.get_pods()
+    aws_pods = AwsPod.get_pods()
+    return scc_pods, aws_pods
+
+def cleanup_all(delete):
+    scc_pods, aws_pods = get_pods()
+    all_pods = set()
+    all_pods.update([i['pod_number'] for i in aws_pods])
+    all_pods.update(scc_pods)
+    for i in range(1, ITERATION_COUNT + 1):
+        for pod_number in list(all_pods):
+            if delete:
+                print(f"\n** Pod {pod_number} cleanup - attempt number {i}/{ITERATION_COUNT} **\n")
+            else:
+                print(f"\n** Pod {pod_number} **\n")
+            if pod_number in scc_pods:
+                scc = SccPod('DevNet-Ignite', pod_number, delete=delete)
+                scc.run_all()
+            aws_pod = [i for i in aws_pods if i['pod_number'] == pod_number]
+            if aws_pod:
+                pod = AwsPod(aws_pod[0]['region'], 'DevNet-Ignite', pod_number, delete=delete)
+                pod.run_all()
+            if delete:
+                if pod.fail_count > 0:
+                    print("Cleanup not complete...")
+                else:
+                    print("Cleanup complete for pod {pod_number}!")
+                    all_pods.discard(pod_number)
+        if not delete:
+            break
 
 def main():
     parser = argparse.ArgumentParser(
                     prog='Cleanup',
                     description='Clean up the Terraform AWS and SCC resources of the DevNet Ignite NetSec labs')
     parser.add_argument('-d', '--delete', action='store_true', help="Delete the resources")
-    parser.add_argument('-g', '--get', help="Get and print all pods")
-    parser.add_argument('-a', '--all', help="Cleanup all pods")
+    parser.add_argument('-g', '--get', action='store_true', help="Get and print all pods")
+    parser.add_argument('-a', '--all', action='store_true', help="Cleanup all pods")
     parser.add_argument('-p', '--pod', help="Cleanup specified pod")
     args = parser.parse_args()
 
     if args.get:
-        pass
+        get_pods()
     elif args.pod:
-        for i in range(1, ITERATION_COUNT + 1):
-            if args.delete:
-                print(f"\n** Attempt number {i}/{ITERATION_COUNT} **\n")
-            scc = SccPod('DevNet-Ignite', args.pod, delete=args.delete)
-            scc.run_all()
-            pod = AwsPod('us-east-1', 'DevNet-Ignite', args.pod, delete=args.delete)
-            pod.run_all()
-            if not args.delete:
-                break
+        cleanup_pod(args.pod, args.delete)
     elif args.all:
-        pass
+        cleanup_all(args.delete)
     else:
         parser.print_help()
 

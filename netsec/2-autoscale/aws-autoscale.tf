@@ -27,7 +27,7 @@ resource "aws_cloudformation_stack" "autoscale_cf_stack" {
     fmcMetricsUsername: ""
     fmcMetricsPassword: ""
     ngfwPassword: random_password.ftd_pass.result
-    S3BktName: "devnetlambda"
+    S3BktName: lower("${local.env_name}-s3")
   }
 
 }

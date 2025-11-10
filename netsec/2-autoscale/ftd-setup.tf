@@ -52,6 +52,10 @@ resource "aws_network_interface" "ftd_diagnostic" {
   tags = {
     Name = "${local.env_name}-FTDv-diag-interface-1"
   }
+  attachment {
+    instance   = aws_instance.ftdv.id
+    device_index  = 1
+  }
 }
 
 # FTD Inside interface
@@ -63,6 +67,10 @@ resource "aws_network_interface" "ftd_inside" {
   tags = {
     Name = "${local.env_name}-FTDv-data-interface-2"
   }
+  attachment {
+    instance   = aws_instance.ftdv.id
+    device_index  = 2
+  }
 }
 
 # FTD Outside interface
@@ -73,6 +81,10 @@ resource "aws_network_interface" "ftd_outside" {
   source_dest_check = false
   tags = {
     Name = "${local.env_name}-FTDv-data-interface-3"
+  }
+  attachment {
+    instance   = aws_instance.ftdv.id
+    device_index  = 3
   }
 }
 
@@ -98,31 +110,9 @@ resource "aws_instance" "ftdv" {
   root_block_device {
     encrypted = true
   }
-  network_interface {
-    network_interface_id = aws_network_interface.ftd_management.id # ftd_management
-    device_index         = 0
+  primary_network_interface {
+    network_interface_id = aws_network_interface.ftd_management.id
   }
-  network_interface {
-    network_interface_id = aws_network_interface.ftd_diagnostic.id # ftd_diagnostic
-    device_index         = 1
-  }
-  network_interface {
-    network_interface_id = aws_network_interface.ftd_inside.id # ftd_inside
-    device_index         = 2
-  }
-  network_interface {
-    network_interface_id = aws_network_interface.ftd_outside.id # ftd_outside
-    device_index         = 3
-  }
-  # optional DMZ interface
-  # dynamic "network_interface" {
-  #   for_each = var.dmz_subnet == null ? toset([]) : toset([1])
-
-  #   content {
-  #     network_interface_id = aws_network_interface.ftd_dmz[0].id
-  #     device_index         = 4
-  #   }
-  # }
   user_data = data.template_file.ftd_startup_file.rendered
   tags = {
     Name = "${local.env_name}-FTDv"

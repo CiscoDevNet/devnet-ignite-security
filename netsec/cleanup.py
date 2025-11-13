@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 import sys
 import os
 import json
@@ -713,7 +713,7 @@ def cleanup_all(delete):
                 if pod.fail_count > 0:
                     print("Cleanup not complete...")
                 else:
-                    print("Cleanup complete for pod {pod_number}!")
+                    print(f"Cleanup complete for pod {pod_number}!")
                     all_pods.discard(pod_number)
         if not delete:
             break
@@ -733,6 +733,13 @@ def main():
     elif args.pod:
         cleanup_pod(args.pod, args.delete)
     elif args.all:
+        if args.delete:
+            user_input = input("You have selected to cleanup all pods. Are you sure you want to proceed? (y/n): ")
+            if user_input.lower() == 'y' or user_input.lower() == 'yes':
+                print("Proceeding...")
+            else:
+                print("Exiting.")
+                exit(0)
         cleanup_all(args.delete)
     else:
         parser.print_help()

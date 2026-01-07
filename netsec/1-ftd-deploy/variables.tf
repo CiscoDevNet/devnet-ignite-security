@@ -87,12 +87,12 @@ variable "sccfm_api_token" {
 }
 
 # AWS Access Key
-variable "aws_access_key_id" {
-  type          = string
-}
+# variable "aws_access_key_id" {
+#   type          = string
+# }
 
 # AWS Secret Access Key
-variable "aws_secret_access_key" {
-  type          = string
-  sensitive     = true
-}
+# variable "aws_secret_access_key" {
+#   type          = string
+#   sensitive     = true
+# }

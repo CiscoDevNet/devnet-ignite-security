@@ -19,10 +19,10 @@ data "template_file" "ftd_startup_file" {
 data "aws_ami" "ftdv" {
   owners      = ["aws-marketplace"]
   most_recent = true
-  filter {
-    name   = "name"
-    values = ["*${var.ftdv_version}*"]
-  }
+  # filter {
+  #   name   = "name"
+  #   values = ["*${var.ftdv_version}*"]
+  # }
   filter {
     name   = "product-code"
     values = ["a8sxy6easi2zumgtyr564z6y7"]

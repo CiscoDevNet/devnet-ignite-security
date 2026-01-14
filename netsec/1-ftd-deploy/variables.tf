@@ -16,13 +16,21 @@ variable "ingress_user_networks" {
     default = ["IPADDRESS/32"]
 }
 
+#AWS Access Key
+variable "aws_access_key_id" {
+  type          = string
+}
+
+#AWS Secret Access Key
+variable "aws_secret_access_key" {
+  type          = string
+  sensitive     = true
+}
 variable "region" {
   type          = string
-  default       = "us-east-2"
 }
 variable "aws_az" {
   type          = string
-  default       = "us-east-2a"
 }
 
 # Service VPC
@@ -86,13 +94,3 @@ variable "sccfm_api_token" {
   type          = string 
 }
 
-#AWS Access Key
-variable "aws_access_key_id" {
-  type          = string
-}
-
-#AWS Secret Access Key
-variable "aws_secret_access_key" {
-  type          = string
-  sensitive     = true
-}
